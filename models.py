@@ -1,7 +1,7 @@
 # -*- codeing = utf-8 -*-
 # Time : 2022/7/18 14:03
 # @Auther : zhouchao
-# @File: model.py
+# @File: models.py
 # @Software:PyCharm、
 import numpy as np
 from sklearn.metrics import classification_report
