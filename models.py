@@ -11,7 +11,7 @@ from elm import ELM
 
 
 class AnonymousColorDetector(object):
-    def __init__(self):
+    def __init__(self, file_path=None):
         self.model = None
 
     def fit(self, x: np.ndarray, world_boundary: np.ndarray, threshold: float, model_selected: str = 'elm',
@@ -71,9 +71,16 @@ class AnonymousColorDetector(object):
                         break
         return negative_samples
 
+    def save(self, file_path=None):
+        self.model.save(file_path)
+
+    def load(self, file_path):
+        self.model.load(file_path)
+
 
 if __name__ == '__main__':
     detector = AnonymousColorDetector()
     x = np.array([[10, 30, 20], [10, 35, 25], [10, 35, 36]])
     world_boundary = np.array([0, -127, -127, 100, 127, 127])
     detector.fit(x, world_boundary, threshold=5, negative_sample_size=2000)
+    detector.load('ELM_2022-07-18_17-01.mat')
