@@ -3,47 +3,80 @@
 # @Auther : zhouchao
 # @File: models.py
 # @Software:PyCharm、
+import datetime
+
+import cv2
 import numpy as np
+import scipy.io
 from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 
 from elm import ELM
 
 
-class AnonymousColorDetector(object):
-    def __init__(self, file_path=None):
-        self.model = None
+class Detector(object):
+    def __int__(self, *args, **kwargs):
+        raise NotImplementedError
 
-    def fit(self, x: np.ndarray, world_boundary: np.ndarray, threshold: float, model_selected: str = 'elm',
-            negative_sample_size: int = 1000, train_size: float = 0.8, **kwargs):
+    def predict(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def load(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def save(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def fit(self, *args, **kwargs):
+        raise NotImplementedError
+
+
+class AnonymousColorDetector(Detector):
+    def __init__(self, file_path: str = None):
+        self.model = None
+        if file_path is not None:
+            self.model = ELM(model_path=file_path)
+
+    def fit(self, x: np.ndarray, world_boundary: np.ndarray, threshold: float,
+            negative_sample_size: int = 1000, train_size: float = 0.8, is_save_dataset=False, **kwargs):
         """
         拟合到指定的样本分布情况下，根据x进行分布的变化。
 
         :param x: ndarray类型的正样本数据，给出的正样本形状为 n x feature_num
         :param world_boundary: 整个世界的边界，边界形状为 feature_num个下限, feature_num个上限
         :param threshold: 与正样本之间的距离阈值大于多少则不认为是指定的样本类别
-        :param model_selected: 选择模型，默认为elm
         :param negative_sample_size: 负样本的数量
+        :param train_size: 训练集的比例, float
+        :param is_save_dataset: 是否保存数据集
         :param kwargs: 与模型相对应的参数
         :return:
         """
-        assert model_selected in ['elm']
-        if model_selected == 'elm':
-            node_num = kwargs.get('node_num', 10)
-            self.model = ELM(input_size=x.shape[1], node_num=node_num, output_num=2, **kwargs)
+        node_num = kwargs.get('node_num', 10)
+        self.model = ELM(input_size=x.shape[1], node_num=node_num, output_num=2, **kwargs)
         negative_samples = self.generate_negative_samples(x, world_boundary, threshold,
                                                           sample_size=negative_sample_size)
         data_x, data_y = np.concatenate([x, negative_samples], axis=0), \
                          np.concatenate([np.ones(x.shape[0], dtype=int),
                                          np.zeros(negative_samples.shape[0], dtype=int)], axis=0)
+        if is_save_dataset:
+            path = datetime.datetime.now().strftime("dataset_%Y-%m-%d_%H-%M.mat")
+            scipy.io.savemat(path, {'x': data_x, 'y': data_y})
         x_train, x_val, y_train, y_val = train_test_split(data_x, data_y, train_size=train_size, shuffle=True)
-
         self.model.fit(x_train, y_train)
         y_predict = self.model.predict(x_val)
         print(classification_report(y_true=y_val, y_pred=y_predict))
 
     def predict(self, x):
-        return self.model.predict(x)
+        """
+        输入rgb彩色图像
+
+        :param x: rgb彩色图像,np.ndarray
+        :return:
+        """
+        w, h = x.shape[1], x.shape[0]
+        x = cv2.cvtColor(x, cv2.COLOR_RGB2LAB)
+        result = self.model.predict(x.reshape(w * h, -1))
+        return result.reshape(h, w)
 
     @staticmethod
     def generate_negative_samples(x: np.ndarray, world_boundary: np.ndarray, threshold: float, sample_size: int):

@@ -36,9 +36,15 @@ class ELM:
         :param bias: [array] shape: 1 x node_num
         :param beta: [array] shape: node_num, output_num
         :param rand_seed: [int] the random seed
+        :param model_path: [str] the trained model path
         """
         if rand_seed is not None:
             np.random.seed(rand_seed)
+
+        if 'model_path' in kwargs:
+            data = scipy.io.loadmat(kwargs['model_path'])
+            self.w, self.b, self.beta = data['w'], data['b'], data['beta']
+            return
 
         if weight is not None:
             self.w = weight
