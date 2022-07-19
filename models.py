@@ -86,7 +86,7 @@ class AnonymousColorDetector(Detector):
         y_predict = self.model.predict(x_val)
         print(classification_report(y_true=y_val, y_pred=y_predict))
 
-    def predict(self, x):
+    def predict(self, x, threshold_low=10, threshold_high=170):
         """
         输入rgb彩色图像
 
@@ -95,7 +95,11 @@ class AnonymousColorDetector(Detector):
         """
         w, h = x.shape[1], x.shape[0]
         x = cv2.cvtColor(x, cv2.COLOR_RGB2LAB)
-        result = self.model.predict(x.reshape(w * h, -1))
+        x = x.reshape(w * h, -1)
+        mask = (threshold_low < x[:, 0]) & (x[:, 0] < threshold_high)
+        mask_result = self.model.predict(x[mask])
+        result = np.ones((w * h,))
+        result[mask] = mask_result
         return result.reshape(h, w)
 
     @staticmethod

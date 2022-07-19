@@ -31,7 +31,7 @@ def virtual_main(detector: Detector, test_img=None, test_img_dir=None, test_mode
         else:
             raise TypeError("test img should be np.ndarray or str")
         t1 = time.time()
-        img = cv2.resize(img, (1024, 256))
+        # img = cv2.resize(img, (1024, 256))
         t2 = time.time()
         result = 1 - detector.predict(img)
         t3 = time.time()
@@ -55,5 +55,7 @@ def virtual_main(detector: Detector, test_img=None, test_img_dir=None, test_mode
 
 
 if __name__ == '__main__':
-    detector = AnonymousColorDetector(file_path='models/dt_2022-07-19_14-38.model')
+    detector = AnonymousColorDetector(file_path='dt_2022-07-19_17-07.model')
+    virtual_main(detector, test_img=r'data/dataset/img/yangeng.bmp', test_model=True)
+    virtual_main(detector, test_img=r'data/dataset/img/yangeng.bmp', test_model=True)
     virtual_main(detector, test_img=r'data/dataset/img/yangeng.bmp', test_model=True)
