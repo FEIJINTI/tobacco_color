@@ -10,15 +10,17 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from models import Detector, AnonymousColorDetector
+from utils import read_labeled_img
 
 
-def virtual_main(detector: Detector, test_img=None, test_img_dir=None):
+def virtual_main(detector: Detector, test_img=None, test_img_dir=None, test_model=False):
     """
     虚拟读图测试程序
 
     :param detector: 杂质探测器，需要继承Detector类
     :param test_img: 测试图像，rgb格式的图片或者路径
     :param test_img_dir: 测试图像文件夹
+    :param test_model: 是否进行模型约束性测试
     :return:
     """
     if test_img is not None:
@@ -29,8 +31,10 @@ def virtual_main(detector: Detector, test_img=None, test_img_dir=None):
         else:
             raise TypeError("test img should be np.ndarray or str")
         t1 = time.time()
-        result = detector.predict(img)
+        img = cv2.resize(img, (1024, 256))
         t2 = time.time()
+        result = 1 - detector.predict(img)
+        t3 = time.time()
         fig, axs = plt.subplots(3, 1)
         axs[0].imshow(img)
         axs[1].imshow(result)
@@ -38,10 +42,18 @@ def virtual_main(detector: Detector, test_img=None, test_img_dir=None):
         mask_color[result > 0] = (0, 0, 255)
         result_show = cv2.addWeighted(img, 1, mask_color, 0.5, 0)
         axs[2].imshow(result_show)
-        plt.title(f'{(t2 - t1) * 1000:.2f} ms')
+        axs[0].set_title(
+            f' resize {(t2 - t1) * 1000:.2f} ms, predict {(t3 - t2) * 1000:.2f} ms, total {(t3 - t1) * 1000:.2f} ms')
         plt.show()
+    if test_model:
+        data_dir = "data/dataset"
+        color_dict = {(0, 0, 255): "yangeng"}
+        dataset = read_labeled_img(data_dir, color_dict=color_dict, is_ps_color_space=False)
+        ground_truth = dataset['yangeng']
+        world_boundary = np.array([0, 0, 0, 255, 255, 255])
+        detector.visualize(world_boundary, sample_size=50000, class_max_num=5000, ground_truth=ground_truth)
 
 
 if __name__ == '__main__':
-    detector = AnonymousColorDetector(file_path='models/ELM_2022-07-18_17-22.mat')
-    virtual_main(detector, test_img='data/dataset/img/yangeng.bmp')
+    detector = AnonymousColorDetector(file_path='models/dt_2022-07-19_14-38.model')
+    virtual_main(detector, test_img=r'data/dataset/img/yangeng.bmp', test_model=True)

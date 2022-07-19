@@ -55,7 +55,7 @@ def read_labeled_img(dataset_dir: str, color_dict: dict, ext='.bmp', is_ps_color
     return total_dataset
 
 
-def lab_scatter(dataset: dict, class_max_num=None, is_3d=False, is_ps_color_space=True):
+def lab_scatter(dataset: dict, class_max_num=None, is_3d=False, is_ps_color_space=True, **kwargs):
     """
     在lab色彩空间内绘制3维数据分布情况
 
