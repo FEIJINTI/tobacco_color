@@ -14,7 +14,7 @@ color_dict = {(0, 0, 255): "yangeng", (255, 0, 0): 'beijing', (0, 255, 0): "zibi
 # color_dict = {(255, 0, 0): 'beijing'}
 # color_dict = {(0, 255, 0): "zibian"}
 label_index = {"yangeng": 1, "beijing": 0, "zibian": 2}  # 类别对应的序号
-show_samples = False  # 是否展示样本
+show_samples = True  # 是否展示样本
 
 # 定义一些训练量
 threshold = 5  # 正样本周围多大范围内的还算是正样本
