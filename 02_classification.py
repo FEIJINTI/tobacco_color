@@ -12,8 +12,8 @@ dataset_file = "data/dataset/dataset_2022-07-20_10-04.mat"
 
 # color_dict = {(0, 0, 255): "yangeng", (255, 0, 0): 'beijing'} # 颜色对应的类别
 color_dict = {(0, 0, 255): "yangeng"}
-color_dict = {(255, 0, 0): 'beijing'}
-color_dict = {(0, 255, 0): "zibian"}
+# color_dict = {(255, 0, 0): 'beijing'}
+# color_dict = {(0, 255, 0): "zibian"}
 label_index = {"yangeng": 1, "beijing": 0, "zibian": 2}  # 类别对应的序号
 show_samples = False  # 是否展示样本
 
