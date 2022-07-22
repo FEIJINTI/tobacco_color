@@ -118,8 +118,9 @@
 
 在对这个模型进行重新训练后，获得的新模型识别结果如下图所示：
 
-|   类别   |                             图像                             |
-| :------: | :----------------------------------------------------------: |
-|   原图   | ![QQ20220721-1](https://raw.githubusercontent.com/Karllzy/imagebed/main/img/QQ20220721-1.png) |
-| 识别结果 | ![image-20220721203004305](https://raw.githubusercontent.com/Karllzy/imagebed/main/img/image-20220721203004305.png) |
+|     类别     |                             图像                             |
+| :----------: | :----------------------------------------------------------: |
+|     原图     | ![QQ20220721-1](https://raw.githubusercontent.com/Karllzy/imagebed/main/img/QQ20220721-1.png) |
+|   识别结果   | ![image-20220721203004305](https://raw.githubusercontent.com/Karllzy/imagebed/main/img/image-20220721203004305.png) |
+| 模型约束情况 | ![image-20220722095620511](https://raw.githubusercontent.com/Karllzy/imagebed/main/img/image-20220722095620511.png) |
 
