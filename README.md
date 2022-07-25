@@ -17,7 +17,7 @@
 3. 使用[02_classification.ipynb](./02_classification.ipynb)进行训练
 4. 使用[03_data_update.ipynb](02_classification.ipynb)进行数据的更新与添加
 5. 使用`main_test.py`文件进行读图测试
-6. **部署**，复制`utils.py`、`models.py`、`main.py`、`models`、`config.py`这5个文件或文件夹，运行main.py来提供预测服务。
+6. **部署**，复制`utils.py`、`models.py`、`main.py`、`models/`、`config.py`这5个文件或文件夹，运行main.py来提供预测服务。
 
 
 ## 训练的原理
