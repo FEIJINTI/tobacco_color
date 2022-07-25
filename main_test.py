@@ -3,6 +3,7 @@
 # @Auther : zhouchao
 # @File: main_test.py
 # @Software:PyCharm
+import os
 import time
 
 import cv2
@@ -13,7 +14,7 @@ from models import Detector, AnonymousColorDetector
 from utils import read_labeled_img
 
 
-def virtual_main(detector: Detector, test_img=None, test_img_dir=None, test_model=False):
+def virtual_main(detector: AnonymousColorDetector, test_img=None, test_img_dir=None, test_model=False):
     """
     虚拟读图测试程序
 
@@ -45,6 +46,10 @@ def virtual_main(detector: Detector, test_img=None, test_img_dir=None, test_mode
         axs[0].set_title(
             f' resize {(t2 - t1) * 1000:.2f} ms, predict {(t3 - t2) * 1000:.2f} ms, total {(t3 - t1) * 1000:.2f} ms')
         plt.show()
+    if test_img_dir is not None:
+        image_names = os.listdir(test_img_dir)
+        for image_name in image_names:
+            img = cv2.imread(os.path.join(test_img_dir, image_name))[..., ::-1]
     if test_model:
         data_dir = "data/dataset"
         color_dict = {(0, 0, 255): "yangeng"}
@@ -55,13 +60,13 @@ def virtual_main(detector: Detector, test_img=None, test_img_dir=None, test_mode
 
 
 if __name__ == '__main__':
-    detector = AnonymousColorDetector(file_path='dt_2022-07-20_14-40.model')
-    virtual_main(detector,
+    model = AnonymousColorDetector(file_path='dt_2022-07-20_14-40.model')
+    virtual_main(model,
                  test_img=r'C:\Users\FEIJINTI\Desktop\720\binning1\tobacco\Image_2022_0720_1354_46_472-003051.bmp',
                  test_model=True)
-    virtual_main(detector,
+    virtual_main(model,
                  test_img=r'C:\Users\FEIJINTI\Desktop\720\binning1\tobacco\Image_2022_0720_1354_46_472-003051.bmp',
                  test_model=True)
-    virtual_main(detector,
+    virtual_main(model,
                  test_img=r'C:\Users\FEIJINTI\Desktop\720\binning1\tobacco\Image_2022_0720_1354_46_472-003051.bmp',
                  test_model=True)

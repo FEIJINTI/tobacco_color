@@ -9,7 +9,7 @@ from models import ManualTree, AnonymousColorDetector
 def main():
     threshold = Config.threshold
     rgb_threshold = Config.rgb_threshold
-    manualTree = ManualTree(blk_model_path=Config.blk_model_path, pixel_model_path=Config.pixel_model_path)
+    manual_tree = ManualTree(blk_model_path=Config.blk_model_path, pixel_model_path=Config.pixel_model_path)
     tobacco_detector = AnonymousColorDetector(file_path=Config.rgb_tobacco_model_path)
     background_detector = AnonymousColorDetector(file_path=Config.rgb_background_model_path)
 
@@ -29,7 +29,7 @@ def main():
         # 读取(开启一个管道)
         if len(data) < 3:
             threshold = int(float(data))
-            print(threshold)
+            print("[INFO] Get threshold: ", threshold)
             continue
         else:
             data_total = data
@@ -46,12 +46,11 @@ def main():
 
         # 识别
         t1 = time.time()
-        img_data = np.frombuffer(data_total, dtype=np.float32).reshape((Config.nRows, Config.nBands, -1)).transpose(0,
-                                                                                                                    2,
-                                                                                                                    1)
+        img_data = np.frombuffer(data_total, dtype=np.float32).reshape((Config.nRows, Config.nBands,
+                                                                        -1)).transpose(0, 2, 1)
         rgb_data = np.frombuffer(rgb_data_total, dtype=np.uint8)
-        pixel_predict_result = manualTree.pixel_predict_ml_dilation(data=img_data, iteration=1)
-        blk_predict_result = manualTree.blk_predict(data=img_data)
+        pixel_predict_result = manual_tree.pixel_predict_ml_dilation(data=img_data, iteration=1)
+        blk_predict_result = manual_tree.blk_predict(data=img_data)
         rgb_data = tobacco_detector.pretreatment(rgb_data)
         rgb_predict_result = 1 - (
                 background_detector.predict(rgb_data) | tobacco_detector.swell(tobacco_detector.predict(rgb_data)))
@@ -65,7 +64,6 @@ def main():
         mask = mask.reshape(Config.nRows, Config.nCols // Config.blk_size, Config.blk_size) \
             .sum(axis=2).reshape(Config.nRows // 4, Config.blk_size, Config.nCols // Config.blk_size) \
             .sum(axis=1)
-        # print(threshold)
         mask[mask <= threshold] = 0
         mask[mask > threshold] = 1
         mask_result = (mask | mask_rgb).astype(np.uint8)
