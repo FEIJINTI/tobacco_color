@@ -96,6 +96,14 @@ def lab_scatter(dataset: dict, class_max_num=None, is_3d=False, is_ps_color_spac
     plt.show()
 
 
+def size_threshold(img, blk_size, threshold):
+    mask = img.reshape(img.shape[0], img.shape[1] // blk_size, blk_size).sum(axis=2). \
+        reshape(img.shape[0] // blk_size, blk_size, img.shape[1] // blk_size).sum(axis=1)
+    mask[mask <= threshold] = 0
+    mask[mask > threshold] = 1
+    return mask
+
+
 if __name__ == '__main__':
     color_dict = {(0, 0, 255): "yangeng", (255, 0, 0): "bejing", (0, 255, 0): "hongdianxian",
                   (255, 0, 255): "chengsebangbangtang", (0, 255, 255): "lvdianxian"}

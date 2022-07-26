@@ -9,17 +9,19 @@ import pickle
 import cv2
 import numpy as np
 import scipy.io
-import tqdm
 from scipy.ndimage import binary_dilation
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 
 from config import Config
-from utils import lab_scatter, read_labeled_img
-from tqdm import tqdm
+from utils import lab_scatter, read_labeled_img, size_threshold
 
-from elm import ELM
+deploy = False
+if not deploy:
+    print("Training env")
+    from tqdm import tqdm
+    from elm import ELM
 
 
 class Detector(object):
@@ -87,7 +89,7 @@ class AnonymousColorDetector(Detector):
         y_predict = self.model.predict(x_val)
         print(classification_report(y_true=y_val, y_pred=y_predict))
 
-    def predict(self, x, threshold_low=10, threshold_high=170):
+    def predict(self, x, threshold_low=5, threshold_high=255):
         """
         输入rgb彩色图像
 
@@ -98,9 +100,11 @@ class AnonymousColorDetector(Detector):
         x = cv2.cvtColor(x, cv2.COLOR_RGB2LAB)
         x = x.reshape(w * h, -1)
         mask = (threshold_low < x[:, 0]) & (x[:, 0] < threshold_high)
-        mask_result = self.model.predict(x[mask])
-        result = np.ones((w * h,))
-        result[mask] = mask_result
+        result = np.ones((w * h,), dtype=np.uint8)
+
+        if np.any(mask):
+            mask_result = self.model.predict(x[mask])
+            result[mask] = mask_result
         return result.reshape(h, w)
 
     @staticmethod
@@ -132,6 +136,12 @@ class AnonymousColorDetector(Detector):
                         break
         bar.close()
         return negative_samples
+
+    def pretreatment(self, x):
+        return cv2.resize(x, (1024, 256))
+
+    def swell(self, x):
+        return cv2.dilate(x, kernel=np.ones((3, 3), np.uint8))
 
     def save(self):
         path = datetime.datetime.now().strftime(f"{self.model_type}_%Y-%m-%d_%H-%M.model")
@@ -290,6 +300,137 @@ class BlkModel:
     def load(self, model_path: str):
         with open(model_path, "rb") as f:
             self.rfc = pickle.load(f)
+
+
+class RgbDetector(Detector):
+    def __init__(self, tobacco_model_path, background_model_path):
+        self.background_detector = None
+        self.tobacco_detector = None
+        self.load(tobacco_model_path, background_model_path)
+
+    def predict(self, rgb_data):
+        rgb_data = self.tobacco_detector.pretreatment(rgb_data)  # resize to the required size
+        background = self.background_detector.predict(rgb_data)
+        tobacco = self.tobacco_detector.predict(rgb_data)
+        tobacco_d = self.tobacco_detector.swell(tobacco)  # dilate the tobacco to remove the tobacco edge error
+        high_s = cv2.cvtColor(rgb_data, cv2.COLOR_RGB2HSV)[..., 1] > Config.threshold_s
+        non_tobacco_or_background = 1 - (background | tobacco_d)  # 既非烟梗也非背景的区域
+        rgb_predict_result = high_s | non_tobacco_or_background  # 高饱和度区域或者是双非区域都是杂质
+        mask_rgb = size_threshold(rgb_predict_result, Config.blk_size, Config.rgb_size_threshold)  # 杂质大小限制，超过大小的才打
+        return mask_rgb
+
+    def load(self, tobacco_model_path, background_model_path):
+        self.tobacco_detector = AnonymousColorDetector(tobacco_model_path)
+        self.background_detector = AnonymousColorDetector(background_model_path)
+
+    def save(self, *args, **kwargs):
+        pass
+
+    def fit(self, *args, **kwargs):
+        pass
+
+
+class SpecDetector(Detector):
+    # 初始化机器学习像素模型、深度学习像素模型、分块模型
+    def __init__(self, blk_model_path, pixel_model_path):
+        self.blk_model = None
+        self.pixel_model_ml = None
+        self.load(blk_model_path, pixel_model_path)
+
+    def load(self, blk_model_path, pixel_model_path):
+        self.pixel_model_ml = PixelModelML(pixel_model_path)
+        self.blk_model = BlkModel(blk_model_path)
+
+    def predict(self, img_data):
+        pixel_predict_result = self.pixel_predict_ml_dilation(data=img_data, iteration=1)
+        blk_predict_result = self.blk_predict(data=img_data)
+        mask = (pixel_predict_result & blk_predict_result).astype(np.uint8)
+        mask = size_threshold(mask, Config.blk_size, Config.spec_size_threshold)
+        return mask
+
+    def save(self, *args, **kwargs):
+        pass
+
+    def fit(self, *args, **kwargs):
+        pass
+
+    # 区分烟梗和非黄色且非背景的杂质
+    @staticmethod
+    def is_yellow(features):
+        features = features.reshape((Config.nRows * Config.nCols), len(Config.selected_bands))
+        sum_x = features.sum(axis=1)[..., np.newaxis]
+        rate = features / sum_x
+        mask = ((rate < Config.is_yellow_max) & (rate > Config.is_yellow_min))
+        mask = np.all(mask, axis=1).reshape(Config.nRows, Config.nCols)
+        return mask
+
+    # 区分背景和黄色杂质
+    @staticmethod
+    def is_black(feature, threshold):
+        feature = feature.reshape((Config.nRows * Config.nCols), feature.shape[2])
+        mask = (feature <= threshold)
+        mask = np.all(mask, axis=1).reshape(Config.nRows, Config.nCols)
+        return mask
+
+    # 预测出烟梗的mask
+    def predict_tobacco(self, x: np.ndarray) -> np.ndarray:
+        """
+        预测出烟梗的mask
+        :param x: 图像数据，形状是 nRows x nCols x nBands
+        :return: bool类型的mask，是否为烟梗, True为烟梗
+        """
+        black_res = self.is_black(x[..., Config.black_yellow_bands], Config.is_black_threshold)
+        yellow_res = self.is_yellow(x[..., Config.black_yellow_bands])
+        yellow_things = (~black_res) & yellow_res
+        x_yellow = x[yellow_things, ...]
+        tobacco = self.pixel_model_ml.predict(x_yellow[..., Config.green_bands])
+        yellow_things[yellow_things] = tobacco
+        return yellow_things
+
+    # 预测出杂质的机器学习像素模型
+    def pixel_predict_ml_dilation(self, data, iteration) -> np.ndarray:
+        """
+        预测出杂质的位置mask
+        :param data: 图像数据，形状是 nRows x nCols x nBands
+        :param iteration: 膨胀的次数
+        :return: bool类型的mask，是否为杂质, True为杂质
+        """
+        black_res = self.is_black(data[..., Config.black_yellow_bands], Config.is_black_threshold)
+        yellow_res = self.is_yellow(data[..., Config.black_yellow_bands])
+        # non_yellow_things为异色杂质
+        non_yellow_things = (~black_res) & (~yellow_res)
+        # yellow_things为黄色物体(烟梗+杂质)
+        yellow_things = (~black_res) & yellow_res
+        # x_yellow为挑出的黄色物体
+        x_yellow = data[yellow_things, ...]
+        if x_yellow.shape[0] == 0:
+            return non_yellow_things
+        else:
+            tobacco = self.pixel_model_ml.predict(x_yellow[..., Config.green_bands]) > 0.5
+
+            non_yellow_things[yellow_things] = ~tobacco
+            # 杂质mask中将背景赋值为0,将杂质赋值为1
+            non_yellow_things = non_yellow_things + 0
+
+            # 烟梗mask中将背景赋值为0,将烟梗赋值为2
+            yellow_things[yellow_things] = tobacco
+            yellow_things = yellow_things + 0
+            yellow_things = binary_dilation(yellow_things, iterations=iteration)
+            yellow_things = yellow_things + 0
+            yellow_things[yellow_things == 1] = 2
+
+            # 将杂质mask和烟梗mask相加,得到的mask中含有0(背景),1(杂质),2(烟梗),3(膨胀后的烟梗与杂质相加的部分)
+            mask = non_yellow_things + yellow_things
+            mask[mask == 0] = False
+            mask[mask == 1] = True
+            mask[mask == 2] = False
+            mask[mask == 3] = False
+            return mask
+
+    # 预测出杂质的分块模型
+    def blk_predict(self, data):
+        blk_result_array = self.blk_model.predict(data)
+        return blk_result_array
 
 
 if __name__ == '__main__':
