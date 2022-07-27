@@ -9,8 +9,7 @@ import cv2
 
 
 def main():
-    spec_detector = SpecDetector(blk_model_path=Config.blk_model_path,
-                                 pixel_model_path=Config.pixel_model_path)
+    spec_detector = SpecDetector(blk_model_path=Config.blk_model_path, pixel_model_path=Config.pixel_model_path)
     rgb_detector = RgbDetector(tobacco_model_path=Config.rgb_tobacco_model_path,
                                background_model_path=Config.rgb_background_model_path)
     total_len = Config.nRows * Config.nCols * Config.nBands * 4  # float型变量, 4个字节
@@ -43,9 +42,8 @@ def main():
         os.close(fd_rgb)
         # 识别
         t1 = time.time()
-        img_data = np.frombuffer(data_total, dtype=np.float32).reshape((Config.nRows, Config.nBands, -1)).transpose(0,
-                                                                                                                    2,
-                                                                                                                    1)
+        img_data = np.frombuffer(data_total, dtype=np.float32).reshape((Config.nRows, Config.nBands, -1)) \
+            .transpose(0, 2, 1)
         rgb_data = np.frombuffer(rgb_data_total, dtype=np.uint8).reshape((Config.nRgbRows, Config.nRgbCols, -1))
         # 光谱识别
         mask = spec_detector.predict(img_data)

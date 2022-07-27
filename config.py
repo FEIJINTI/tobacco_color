@@ -23,7 +23,7 @@ class Config:
     blk_model_path = r"./models/rf_4x4_c22_20_sen8_8.model"
 
     # rgb模型参数
-    rgb_tobacco_model_path = r"models/tobacco_dt_2022-07-21_16-30.model"
-    rgb_background_model_path = r"models/beijing_dt_2022-07-21_16-44.model"
+    rgb_tobacco_model_path = r"models/tobacco_dt_2022-07-26_15-57.model"
+    rgb_background_model_path = r"models/background_dt_2022-07-27_08-11.model"
     threshold_low, threshold_high = 5, 255
     threshold_s = 175
