@@ -4,8 +4,8 @@ import numpy as np
 
 class Config:
     # 文件相关参数
-    nRows, nCols, nBands, spec_size_threshold = 256, 1024, 22, 3
-    nRgbRows, nRgbCols, nRgbBands, rgb_size_threshold = 1024, 4096, 3, 4
+    nRows, nCols, nBands = 256, 1024, 22
+    nRgbRows, nRgbCols, nRgbBands = 1024, 4096, 3
 
     # 需要设置的谱段等参数
     selected_bands = [127, 201, 202, 294]
@@ -21,9 +21,11 @@ class Config:
     blk_size = 4
     pixel_model_path = r"./models/dt.p"
     blk_model_path = r"./models/rf_4x4_c22_20_sen8_8.model"
+    spec_size_threshold = 3
 
     # rgb模型参数
     rgb_tobacco_model_path = r"models/tobacco_dt_2022-07-26_15-57.model"
     rgb_background_model_path = r"models/background_dt_2022-07-27_08-11.model"
-    threshold_low, threshold_high = 5, 255
+    threshold_low, threshold_high = 10, 230
     threshold_s = 175
+    rgb_size_threshold = 4
