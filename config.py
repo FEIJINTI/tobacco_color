@@ -4,7 +4,7 @@ import numpy as np
 
 class Config:
     # 文件相关参数
-    nRows, nCols, nBands, spec_size_threshold, = 256, 1024, 22, 3
+    nRows, nCols, nBands, spec_size_threshold = 256, 1024, 22, 3
     nRgbRows, nRgbCols, nRgbBands, rgb_size_threshold = 1024, 4096, 3, 4
 
     # 需要设置的谱段等参数

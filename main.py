@@ -27,6 +27,7 @@ def main():
         # 读取(开启一个管道)
         if len(data) < 3:
             threshold = int(float(data))
+            Config.spec_size_threshold = threshold
             print("[INFO] Get threshold: ", threshold)
             continue
         else:
@@ -34,6 +35,7 @@ def main():
             rgb_data = os.read(fd_rgb, total_rgb)
             if len(rgb_data) < 3:
                 rgb_threshold = int(float(rgb_data))
+                Config.rgb_size_threshold = rgb_threshold
                 print(rgb_threshold)
                 continue
             else:
