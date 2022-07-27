@@ -17,7 +17,7 @@ from sklearn.model_selection import train_test_split
 from config import Config
 from utils import lab_scatter, read_labeled_img, size_threshold
 
-deploy = False
+deploy = True
 if not deploy:
     print("Training env")
     from tqdm import tqdm
@@ -415,7 +415,7 @@ class SpecDetector(Detector):
             # 烟梗mask中将背景赋值为0,将烟梗赋值为2
             yellow_things[yellow_things] = tobacco
             yellow_things = yellow_things + 0
-            yellow_things = binary_dilation(yellow_things, iterations=iteration)
+            # yellow_things = binary_dilation(yellow_things, iterations=iteration)
             yellow_things = yellow_things + 0
             yellow_things[yellow_things == 1] = 2
 

@@ -26,6 +26,6 @@ class Config:
     # rgb模型参数
     rgb_tobacco_model_path = r"models/tobacco_dt_2022-07-26_15-57.model"
     rgb_background_model_path = r"models/background_dt_2022-07-27_08-11.model"
-    threshold_low, threshold_high = 5, 230
+    threshold_low, threshold_high = 10, 230
     threshold_s = 175
     rgb_size_threshold = 4
