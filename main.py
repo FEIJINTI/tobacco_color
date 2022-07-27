@@ -1,5 +1,7 @@
 import os
 import time
+
+import matplotlib.pyplot as plt
 import numpy as np
 import scipy.io
 
@@ -70,6 +72,26 @@ def main():
         print(f'total time is:{t3 - t1}\n')
 
 
+def read_c_captures(buffer_path):
+    buffer_names = [buffer_name for buffer_name in os.listdir(buffer_path) if buffer_name.endswith('.raw')]
+    for buffer_name in buffer_names:
+        with open(os.path.join(buffer_path, buffer_name), 'rb') as f:
+            data = f.read()
+        img = np.frombuffer(data, dtype=np.float32).reshape((Config.nRows, Config.nBands, -1)) \
+            .transpose(0, 2, 1)
+        mask_name = buffer_name.replace('buf', 'mask').replace('.raw', '')
+        with open(os.path.join(buffer_path, mask_name), 'rb') as f:
+            data = f.read()
+        mask = np.frombuffer(data, dtype=np.uint8).reshape((256, 1024, -1))
+        # mask = cv2.resize(mask, (1024, 256))
+        fig, axs = plt.subplots(2, 1)
+        axs[0].imshow(img[..., [21, 3, 0]])
+        axs[0].set_title(buffer_name)
+        axs[1].imshow(mask)
+        axs[1].set_title(mask_name)
+        plt.show()
+
+
 if __name__ == '__main__':
     # 相关参数
     img_fifo_path = "/tmp/dkimg.fifo"
@@ -78,3 +100,4 @@ if __name__ == '__main__':
 
     # 主函数
     main()
+    # read_c_captures('/home/lzy/2022.7.20/tobacco_v1_0/')

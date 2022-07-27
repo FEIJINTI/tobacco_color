@@ -20,7 +20,7 @@ class Config:
     # 光谱模型参数
     blk_size = 4
     pixel_model_path = r"./models/dt.p"
-    blk_model_path = r"./models/rf_4x4_c22_20_sen8_8.model"
+    blk_model_path = r"./models/rf_4x4_c22_20_sen8_9.model"
     spec_size_threshold = 3
 
     # rgb模型参数
