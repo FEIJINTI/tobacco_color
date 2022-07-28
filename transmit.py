@@ -9,7 +9,7 @@ from models import SpecDetector, RgbDetector
 import typing
 import logging
 logging.basicConfig(format='%(asctime)s %(levelname)s %(name)s %(message)s',
-                    level=logging.DEBUG)
+                    level=logging.INFO)
 
 
 class Transmitter(object):

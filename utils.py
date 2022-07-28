@@ -10,6 +10,13 @@ from queue import Queue
 import cv2
 import numpy as np
 from matplotlib import pyplot as plt
+import re
+
+
+def natural_sort(l):
+    convert = lambda text: int(text) if text.isdigit() else text.lower()
+    alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
+    return sorted(l, key=alphanum_key)
 
 
 class MergeDict(dict):
