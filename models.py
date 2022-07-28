@@ -5,10 +5,12 @@
 # @Software:PyCharm、
 import datetime
 import pickle
+from queue import Queue
 
 import cv2
 import numpy as np
 import scipy.io
+import threading
 from scipy.ndimage import binary_dilation
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import classification_report
@@ -16,6 +18,7 @@ from sklearn.model_selection import train_test_split
 
 from config import Config
 from utils import lab_scatter, read_labeled_img, size_threshold
+
 
 deploy = True
 if not deploy:
@@ -415,7 +418,7 @@ class SpecDetector(Detector):
             # 烟梗mask中将背景赋值为0,将烟梗赋值为2
             yellow_things[yellow_things] = tobacco
             yellow_things = yellow_things + 0
-            # yellow_things = binary_dilation(yellow_things, iterations=iteration)
+            yellow_things = binary_dilation(yellow_things, iterations=iteration)
             yellow_things = yellow_things + 0
             yellow_things[yellow_things == 1] = 2
 
