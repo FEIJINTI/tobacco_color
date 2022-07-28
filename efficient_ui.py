@@ -15,7 +15,7 @@ class EfficientUI(object):
         rgb_fifo_path = "/tmp/dkrgb.fifo"
         # 创建队列用于链接各个线程
         rgb_img_queue, spec_img_queue = Queue(), Queue()
-        detector_queue, save_queue, self.visual_queue = Queue(), Queue, Queue()
+        detector_queue, save_queue, self.visual_queue = Queue(), Queue(), Queue()
         mask_queue = Queue()
         # 两个接收者,接收光谱和rgb图像
         spec_len = Config.nRows * Config.nCols * Config.nBands * 4  # float型变量, 4个字节
@@ -31,11 +31,11 @@ class EfficientUI(object):
         # 发送
         sender = transmit.FifoSender(output_fifo_path=mask_fifo_path, source=mask_queue)
         # 启动所有线程
-        spec_receiver.start(post_process_func=transmit.PostProcessMethods.spec_data_post_process, name='spce_thread')
-        rgb_receiver.start(post_process_func=transmit.PostProcessMethods.rgb_data_post_process, name='rgb_thread')
+        spec_receiver.start(post_process_func=transmit.BeforeAfterMethods.spec_data_post_process, name='spce_thread')
+        rgb_receiver.start(post_process_func=transmit.BeforeAfterMethods.rgb_data_post_process, name='rgb_thread')
         cmd_img_controller.start(name='control_thread')
         detector.start(name='detector_thread')
-        sender.start(name='sender_thread')
+        sender.start(pre_process=transmit.BeforeAfterMethods.mask_preprocess, name='sender_thread')
 
     def start(self):
         # 启动图形化

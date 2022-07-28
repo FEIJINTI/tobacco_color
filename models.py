@@ -20,7 +20,7 @@ from config import Config
 from utils import lab_scatter, read_labeled_img, size_threshold
 
 
-deploy = False
+deploy = True
 if not deploy:
     print("Training env")
     from tqdm import tqdm
