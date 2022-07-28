@@ -1,12 +1,15 @@
 import os
 import time
+from queue import Queue
 
-import matplotlib.pyplot as plt
 import numpy as np
-import scipy.io
+from matplotlib import pyplot as plt
+
+import models
+import transmit
 
 from config import Config
-from models import RgbDetector, SpecDetector, ManualTree, AnonymousColorDetector
+from models import RgbDetector, SpecDetector
 import cv2
 
 
@@ -56,20 +59,19 @@ def main():
         mask = spec_detector.predict(img_data)
         # rgb识别
         mask_rgb = rgb_detector.predict(rgb_data)
-        
         # 结果合并
         mask_result = (mask | mask_rgb).astype(np.uint8)
-        
         # mask_result = mask_rgb.astype(np.uint8)
         mask_result = mask_result.repeat(Config.blk_size, axis=0).repeat(Config.blk_size, axis=1).astype(np.uint8)
         t2 = time.time()
+        print(f'rgb len = {len(rgb_data)}')
 
         # 写出
         fd_mask = os.open(mask_fifo_path, os.O_WRONLY)
         os.write(fd_mask, mask_result.tobytes())
         os.close(fd_mask)
         t3 = time.time()
-        print(f'total time is:{t3 - t1}\n')
+        print(f'total time is:{t3 - t1}')
 
 
 def read_c_captures(buffer_path, no_mask=True, nrows=256, ncols=1024, selected_bands=None):

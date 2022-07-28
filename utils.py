@@ -5,6 +5,7 @@
 # @Software:PyCharm
 import glob
 import os
+from queue import Queue
 
 import cv2
 import numpy as np
@@ -24,6 +25,34 @@ class MergeDict(dict):
                 new_value = np.concatenate([original, v], axis=0)
                 self.update({k: new_value})
         return self
+
+
+class ImgQueue(Queue):
+    """
+        A custom queue subclass that provides a :meth:`clear` method.
+    """
+
+    def clear(self):
+        """
+        Clears all items from the queue.
+        """
+
+        with self.mutex:
+            unfinished = self.unfinished_tasks - len(self.queue)
+            if unfinished <= 0:
+                if unfinished < 0:
+                    raise ValueError('task_done() called too many times')
+                self.all_tasks_done.notify_all()
+            self.unfinished_tasks = unfinished
+            self.queue.clear()
+            self.not_full.notify_all()
+
+    def safe_put(self, *args, **kwargs):
+        if self.full():
+            _ = self.get()
+            return False
+        self.put(*args, **kwargs)
+        return True
 
 
 def read_labeled_img(dataset_dir: str, color_dict: dict, ext='.bmp', is_ps_color_space=True) -> dict:

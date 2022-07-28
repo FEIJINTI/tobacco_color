@@ -5,10 +5,12 @@
 # @Software:PyCharm、
 import datetime
 import pickle
+from queue import Queue
 
 import cv2
 import numpy as np
 import scipy.io
+import threading
 from scipy.ndimage import binary_dilation
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import classification_report
@@ -17,7 +19,8 @@ from sklearn.model_selection import train_test_split
 from config import Config
 from utils import lab_scatter, read_labeled_img, size_threshold
 
-deploy = True
+
+deploy = False
 if not deploy:
     print("Training env")
     from tqdm import tqdm
