@@ -1,15 +1,16 @@
 import os
 import threading
+from multiprocessing import Process, Queue
 import time
 
-from utils import ImgQueue as Queue
+from utils import ImgQueue as ImgQueue
 import numpy as np
 from config import Config
 from models import SpecDetector, RgbDetector
 import typing
 import logging
 logging.basicConfig(format='%(asctime)s %(levelname)s %(name)s %(message)s',
-                    level=logging.INFO)
+                    level=logging.WARNING)
 
 
 class Transmitter(object):
@@ -25,7 +26,7 @@ class Transmitter(object):
         """
         raise NotImplementedError
 
-    def set_output(self, output: Queue):
+    def set_output(self, output: ImgQueue):
         """
         设置单个输出源
         :param output:
@@ -83,7 +84,7 @@ class BeforeAfterMethods:
 
 
 class FifoReceiver(Transmitter):
-    def __init__(self, fifo_path: str, output: Queue, read_max_num: int, msg_queue=None):
+    def __init__(self, fifo_path: str, output: ImgQueue, read_max_num: int, msg_queue=None):
         super().__init__()
         self._input_fifo_path = None
         self._output_queue = None
@@ -101,7 +102,7 @@ class FifoReceiver(Transmitter):
             os.mkfifo(fifo_path, 0o777)
         self._input_fifo_path = fifo_path
 
-    def set_output(self, output: Queue):
+    def set_output(self, output: ImgQueue):
         self._output_queue = output
 
     def start(self, post_process_func=None, name='fifo_receiver'):
@@ -130,7 +131,7 @@ class FifoReceiver(Transmitter):
 
 
 class FifoSender(Transmitter):
-    def __init__(self, output_fifo_path: str, source: Queue):
+    def __init__(self, output_fifo_path: str, source: ImgQueue):
         super().__init__()
         self._input_source = None
         self._output_fifo_path = None
@@ -140,7 +141,7 @@ class FifoSender(Transmitter):
         self._need_stop.clear()
         self._running_thread = None
 
-    def set_source(self, source: Queue):
+    def set_source(self, source: ImgQueue):
         self._input_source = source
 
     def set_output(self, output_fifo_path: str):
@@ -184,7 +185,7 @@ class CmdImgSplitMidware(Transmitter):
     """
     用于控制命令和图像的中间件
     """
-    def __init__(self, subscribers: typing.Dict[str, Queue], rgb_queue: Queue, spec_queue: Queue):
+    def __init__(self, subscribers: typing.Dict[str, ImgQueue], rgb_queue: ImgQueue, spec_queue: ImgQueue):
         super().__init__()
         self._rgb_queue = None
         self._spec_queue = None
@@ -194,11 +195,11 @@ class CmdImgSplitMidware(Transmitter):
         self.set_output(subscribers)
         self.thread_stop = threading.Event()
 
-    def set_source(self, rgb_queue: Queue, spec_queue: Queue):
+    def set_source(self, rgb_queue: ImgQueue, spec_queue: ImgQueue):
         self._rgb_queue = rgb_queue
         self._spec_queue = spec_queue
 
-    def set_output(self, output: typing.Dict[str, Queue]):
+    def set_output(self, output: typing.Dict[str, ImgQueue]):
         self._subscribers = output
 
     def start(self, name='CMD_thread'):
@@ -246,7 +247,7 @@ class ImageSaver(Transmitter):
 
 
 class ThreadDetector(Transmitter):
-    def __init__(self, input_queue: Queue, output_queue: Queue):
+    def __init__(self, input_queue: ImgQueue, output_queue: ImgQueue):
         super().__init__()
         self._input_queue, self._output_queue = input_queue, output_queue
         self._spec_detector = SpecDetector(blk_model_path=Config.blk_model_path,
@@ -256,7 +257,7 @@ class ThreadDetector(Transmitter):
         self._predict_thread = None
         self._thread_exit = threading.Event()
 
-    def set_source(self, img_queue: Queue):
+    def set_source(self, img_queue: ImgQueue):
         self._input_queue = img_queue
 
     def stop(self, *args, **kwargs):
@@ -290,4 +291,52 @@ class ThreadDetector(Transmitter):
                 spec, rgb = self._input_queue.get()
                 mask = self.predict(spec, rgb)
                 self._output_queue.safe_put(mask)
+        self._thread_exit.clear()
+
+
+class ProcessDetector(Transmitter):
+    def __init__(self, input_queue: Queue, output_queue: Queue):
+        super().__init__()
+        self._input_queue, self._output_queue = input_queue, output_queue
+        self._spec_detector = SpecDetector(blk_model_path=Config.blk_model_path,
+                                           pixel_model_path=Config.pixel_model_path)
+        self._rgb_detector = RgbDetector(tobacco_model_path=Config.rgb_tobacco_model_path,
+                                         background_model_path=Config.rgb_background_model_path)
+        self._predict_thread = None
+        self._thread_exit = threading.Event()
+
+    def set_source(self, img_queue: Queue):
+        self._input_queue = img_queue
+
+    def stop(self, *args, **kwargs):
+        self._thread_exit.set()
+
+    def start(self, name='predict_thread'):
+        self._predict_thread = Process(target=self._predict_server, name=name, daemon=True)
+        self._predict_thread.start()
+
+    def predict(self, spec: np.ndarray, rgb: np.ndarray):
+        logging.info(f'Detector get image with shape {spec.shape} and {rgb.shape}')
+        t1 = time.time()
+        mask = self._spec_detector.predict(spec)
+        t2 = time.time()
+        logging.info(f'Detector finish spec predict within {(t2 - t1) * 1000:.2f}ms')
+        # rgb识别
+        mask_rgb = self._rgb_detector.predict(rgb)
+        t3 = time.time()
+        logging.info(f'Detector finish rgb predict within {(t3 - t2) * 1000:.2f}ms')
+        # 结果合并
+        mask_result = (mask | mask_rgb).astype(np.uint8)
+        mask_result = mask_result.repeat(Config.blk_size, axis=0).repeat(Config.blk_size, axis=1).astype(np.uint8)
+        t4 = time.time()
+        logging.info(f'Detector finish merge within {(t4 - t3) * 1000: .2f}ms')
+        logging.info(f'Detector finish predict within {(time.time() -t1)*1000:.2f}ms')
+        return mask_result
+
+    def _predict_server(self):
+        while not self._thread_exit.is_set():
+            if not self._input_queue.empty():
+                spec, rgb = self._input_queue.get()
+                mask = self.predict(spec, rgb)
+                self._output_queue.put(mask)
         self._thread_exit.clear()

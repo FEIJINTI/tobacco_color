@@ -66,11 +66,6 @@ class TestMain:
                 if get_delta:
                     spec_cv = np.clip(spec_img[..., [21, 3, 0]], a_min=0, a_max=1) * 255
                     spec_cv = spec_cv.astype(np.uint8)
-                    plt.imshow(spec_cv)
-                    plt.show()
-                    spec_cv = spec_cv.astype(np.uint8)
-                    plt.imshow(spec_cv)
-                    plt.show()
                     delta = self.calculate_delta(rgb_img, spec_cv)
                     print(delta)
                 self.merge(rgb_img=rgb_img, rgb_mask=rgb_mask,
@@ -112,25 +107,43 @@ class TestMain:
         plt.show()
         return mask_result
 
-    def calculate_delta(self, rgb_img, spec_img):
+    def calculate_delta(self, rgb_img, spec_img, search_area_size=(200, 200), eps=1):
         rgb_grey, spec_grey = cv2.cvtColor(rgb_img, cv2.COLOR_RGB2GRAY), cv2.cvtColor(spec_img, cv2.COLOR_RGB2GRAY)
         _, rgb_bin = cv2.threshold(rgb_grey, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
         _, spec_bin = cv2.threshold(spec_grey, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
         spec_bin = cv2.resize(spec_bin, dsize=(rgb_bin.shape[1], rgb_bin.shape[0]))
-        fig, axs = plt.subplots(2, 1)
-        axs[0].imshow(rgb_bin)
-        axs[1].imshow(spec_bin)
-        plt.show()
-        search_area = np.zeros_like(spec_bin)
-        for x in range(0, spec_bin.shape[0] // 10, 10):
-            for y in range(0, spec_bin.shape[1] // 10, 10):
-                delta_x, delta_y = x - spec_bin.shape[0] // 2, y - spec_bin.shape[1] // 2
+        search_area = np.zeros(search_area_size)
+        for x in range(0, search_area_size[0], eps):
+            for y in range(0, search_area_size[1], eps):
+                delta_x, delta_y = x - search_area_size[0] // 2, y - search_area_size[1] // 2
                 rgb_cross_area = self.get_cross_area(rgb_bin, delta_x, delta_y)
                 spce_cross_area = self.get_cross_area(spec_bin, -delta_x, -delta_y)
                 response_altitude = np.sum(np.sum(rgb_cross_area & spce_cross_area))
                 search_area[x, y] = response_altitude
-        delta = np.argmax(search_area)
-        print(delta)
+        delta = np.unravel_index(np.argmax(search_area), search_area.shape)
+        delta = (delta[0] - search_area_size[1]//2, delta[1] - search_area_size[1]//2)
+        delta_x, delta_y = delta
+
+        rgb_cross_area = self.get_cross_area(rgb_bin, delta_x, delta_y)
+        spce_cross_area = self.get_cross_area(spec_bin, -delta_x, -delta_y)
+
+        human_word = "SPEC is " + str(abs(delta_x)) + " pixels "
+        human_word += 'after' if delta_x >= 0 else ' before '
+        human_word += "RGB and " + str(abs(delta_y)) + " pixels "
+        human_word += "right " if delta_y >= 0 else "left "
+        human_word += "the RGB"
+
+        fig, axs = plt.subplots(3, 1)
+        axs[0].imshow(rgb_img)
+        axs[0].set_title("RGB img")
+        axs[1].imshow(spec_img)
+        axs[1].set_title("spec img")
+        axs[2].imshow(rgb_cross_area & spce_cross_area)
+        axs[2].set_title("cross part")
+        plt.suptitle(human_word)
+        plt.show()
+
+        print(human_word)
         return delta
 
     @staticmethod
@@ -148,5 +161,5 @@ class TestMain:
 
 if __name__ == '__main__':
     testor = TestMain()
-    testor.pony_run(test_path=r'E:\zhouchao\728-tobacco\correct',
-                    test_rgb=True, test_spectra=True, get_delta=True)
+    testor.pony_run(test_path=r'/Volumes/LENOVO_USB_HDD/zhouchao/728-tobacco/correct',
+                    test_rgb=True, test_spectra=True, get_delta=False)

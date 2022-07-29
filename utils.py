@@ -140,6 +140,7 @@ def size_threshold(img, blk_size, threshold):
     return mask
 
 
+
 if __name__ == '__main__':
     color_dict = {(0, 0, 255): "yangeng", (255, 0, 0): "bejing", (0, 255, 0): "hongdianxian",
                   (255, 0, 255): "chengsebangbangtang", (0, 255, 255): "lvdianxian"}
