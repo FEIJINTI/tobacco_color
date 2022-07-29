@@ -125,3 +125,21 @@
 |   识别结果   | ![image-20220721203004305](https://raw.githubusercontent.com/Karllzy/imagebed/main/img/image-20220721203004305.png) |
 | 模型约束情况 | ![image-20220722095620511](https://raw.githubusercontent.com/Karllzy/imagebed/main/img/image-20220722095620511.png) |
 
+## 图像的对齐
+
+引入了RGB和光谱图像的原因，这里牵扯到图像对齐的问题。
+
+这里可以看到对齐的结果：
+
+![Figure_1](https://raw.githubusercontent.com/Karllzy/imagebed/main/img/Figure_1.png)
+
+根据这张图片的换算结果可以得知光谱图像比RGB图像超前了69个像素，大概2.02厘米的样子。
+
+![Figure_2](https://raw.githubusercontent.com/Karllzy/imagebed/main/img/Figure_2.png)
+
+根据这张图片，可以得知，图像上下偏差是2.3厘米
+
+
+![Figure_4](https://raw.githubusercontent.com/Karllzy/imagebed/main/img/Figure_4.png)
+
+这张图片里的上下偏差则达到了2.6厘米左右。
