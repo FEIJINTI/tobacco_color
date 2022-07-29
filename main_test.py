@@ -3,6 +3,7 @@
 # @Auther : zhouchao
 # @File: main_test.py
 # @Software:PyCharm
+import itertools
 import os
 import time
 
@@ -24,7 +25,7 @@ class TestMain:
                                          background_model_path=Config.rgb_background_model_path)
 
     def pony_run(self, test_path, test_spectra=False, test_rgb=False,
-                 convert=False):
+                 convert=False, get_delta=False):
         """
         虚拟读图测试程序
 
@@ -43,12 +44,12 @@ class TestMain:
                 with open(test_path, 'rb') as f:
                     data = f.read()
                 spec_img = transmit.BeforeAfterMethods.spec_data_post_process(data)
-                _ = self.test_spec(spec_img=spec_img)
+                _ = self.test_spec(spec_img=spec_img, img_name=test_path)
             elif test_rgb:
                 with open(test_path, 'rb') as f:
                     data = f.read()
                 rgb_img = transmit.BeforeAfterMethods.rgb_data_post_process(data)
-                _ = self.test_rgb(rgb_img)
+                _ = self.test_rgb(rgb_img, img_name=test_path)
             return
         for rgb_file_name, spec_file_name in zip(rgb_file_names, spec_file_names):
             if test_spectra:
@@ -62,6 +63,16 @@ class TestMain:
                 rgb_img = transmit.BeforeAfterMethods.rgb_data_post_process(data)
                 rgb_mask = self.test_rgb(rgb_img, img_name=rgb_file_name)
             if test_rgb and test_spectra:
+                if get_delta:
+                    spec_cv = np.clip(spec_img[..., [21, 3, 0]], a_min=0, a_max=1) * 255
+                    spec_cv = spec_cv.astype(np.uint8)
+                    plt.imshow(spec_cv)
+                    plt.show()
+                    spec_cv = spec_cv.astype(np.uint8)
+                    plt.imshow(spec_cv)
+                    plt.show()
+                    delta = self.calculate_delta(rgb_img, spec_cv)
+                    print(delta)
                 self.merge(rgb_img=rgb_img, rgb_mask=rgb_mask,
                            spec_img=spec_img[..., [21, 3, 0]], spec_mask=spec_mask,
                            file_name=rgb_file_name)
@@ -101,8 +112,41 @@ class TestMain:
         plt.show()
         return mask_result
 
+    def calculate_delta(self, rgb_img, spec_img):
+        rgb_grey, spec_grey = cv2.cvtColor(rgb_img, cv2.COLOR_RGB2GRAY), cv2.cvtColor(spec_img, cv2.COLOR_RGB2GRAY)
+        _, rgb_bin = cv2.threshold(rgb_grey, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        _, spec_bin = cv2.threshold(spec_grey, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        spec_bin = cv2.resize(spec_bin, dsize=(rgb_bin.shape[1], rgb_bin.shape[0]))
+        fig, axs = plt.subplots(2, 1)
+        axs[0].imshow(rgb_bin)
+        axs[1].imshow(spec_bin)
+        plt.show()
+        search_area = np.zeros_like(spec_bin)
+        for x in range(0, spec_bin.shape[0] // 10, 10):
+            for y in range(0, spec_bin.shape[1] // 10, 10):
+                delta_x, delta_y = x - spec_bin.shape[0] // 2, y - spec_bin.shape[1] // 2
+                rgb_cross_area = self.get_cross_area(rgb_bin, delta_x, delta_y)
+                spce_cross_area = self.get_cross_area(spec_bin, -delta_x, -delta_y)
+                response_altitude = np.sum(np.sum(rgb_cross_area & spce_cross_area))
+                search_area[x, y] = response_altitude
+        delta = np.argmax(search_area)
+        print(delta)
+        return delta
+
+    @staticmethod
+    def get_cross_area(img_bin, delta_x, delta_y):
+        if delta_x >= 0:
+            cross_area = img_bin[delta_x:, :]
+        else:
+            cross_area = img_bin[:delta_x, :]
+        if delta_y >= 0:
+            cross_area = cross_area[:, delta_y:]
+        else:
+            cross_area = cross_area[:, :delta_y]
+        return cross_area
+
 
 if __name__ == '__main__':
     testor = TestMain()
-    testor.pony_run(test_path=r'E:\zhouchao\728-tobacco\728-1-3',
-                    test_rgb=True, test_spectra=True)
+    testor.pony_run(test_path=r'E:\zhouchao\728-tobacco\correct',
+                    test_rgb=True, test_spectra=True, get_delta=True)
