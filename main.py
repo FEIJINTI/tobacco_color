@@ -21,10 +21,12 @@ def main():
     total_rgb = Config.nRgbRows * Config.nRgbCols * Config.nRgbBands * 1  # int型变量
     if not os.access(img_fifo_path, os.F_OK):
         os.mkfifo(img_fifo_path, 0o777)
-    if not os.access(mask_fifo_path, os.F_OK):
-        os.mkfifo(mask_fifo_path, 0o777)
     if not os.access(rgb_fifo_path, os.F_OK):
         os.mkfifo(rgb_fifo_path, 0o777)
+    if not os.access(mask_fifo_path, os.F_OK):
+        os.mkfifo(mask_fifo_path, 0o777)
+    if not os.access(rgb_mask_fifo_path, os.F_OK):
+        os.mkfifo(rgb_mask_fifo_path, 0o777)
     while True:
         fd_img = os.open(img_fifo_path, os.O_RDONLY)
         fd_rgb = os.open(rgb_fifo_path, os.O_RDONLY)
@@ -38,7 +40,7 @@ def main():
         else:
             data_total = data
         os.close(fd_img)
-        
+
         # rgb data read
         rgb_data = os.read(fd_rgb, total_rgb)
         if len(rgb_data) < 3:
@@ -56,20 +58,20 @@ def main():
             .transpose(0, 2, 1)
         rgb_data = np.frombuffer(rgb_data_total, dtype=np.uint8).reshape((Config.nRgbRows, Config.nRgbCols, -1))
         # 光谱识别
-        mask = spec_detector.predict(img_data)
+        mask_spec = spec_detector.predict(img_data)
         # rgb识别
         mask_rgb = rgb_detector.predict(rgb_data)
         # 结果合并
-        mask_result = (mask | mask_rgb).astype(np.uint8)
-        # mask_result = mask_rgb.astype(np.uint8)
-        mask_result = mask_result.repeat(Config.blk_size, axis=0).repeat(Config.blk_size, axis=1).astype(np.uint8)
-        t2 = time.time()
-        print(f'rgb len = {len(rgb_data)}')
+        # mask_result = (mask_spec | mask_rgb).astype(np.uint8)
 
+        # control the size of the output masks
+        masks = [cv2.resize(mask.astype(np.uint8), Config.target_size) for mask in [mask_spec, mask_rgb]]
         # 写出
-        fd_mask = os.open(mask_fifo_path, os.O_WRONLY)
-        os.write(fd_mask, mask_result.tobytes())
-        os.close(fd_mask)
+        output_fifos = [mask_fifo_path, rgb_mask_fifo_path]
+        for fifo, mask in zip(output_fifos, masks):
+            fd_mask = os.open(fifo, os.O_WRONLY)
+            os.write(fd_mask, mask.tobytes())
+            os.close(fd_mask)
         t3 = time.time()
         print(f'total time is:{t3 - t1}')
 
@@ -77,9 +79,10 @@ def main():
 if __name__ == '__main__':
     # 相关参数
     img_fifo_path = "/tmp/dkimg.fifo"
-    mask_fifo_path = "/tmp/dkmask.fifo"
     rgb_fifo_path = "/tmp/dkrgb.fifo"
 
+    mask_fifo_path = "/tmp/dkmask.fifo"
+    rgb_mask_fifo_path = "/tmp/dkmask_rgb.fifo"
     # 主函数
     main()
     # read_c_captures('/home/lzy/2022.7.15/tobacco_v1_0/', no_mask=True, nrows=256, ncols=1024,

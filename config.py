@@ -29,3 +29,6 @@ class Config:
     threshold_low, threshold_high = 10, 230
     threshold_s = 175
     rgb_size_threshold = 4
+
+    # Mask parameter
+    target_size = (1024, 1024)  # (Width, Height) of mask
