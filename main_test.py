@@ -162,5 +162,5 @@ class TestMain:
 
 if __name__ == '__main__':
     testor = TestMain()
-    testor.pony_run(test_path=r'/Volumes/LENOVO_USB_HDD/zhouchao/0730saved_img/correct',
-                    test_rgb=True, test_spectra=True, get_delta=True)
+    testor.pony_run(test_path=r'/home/lzy/2022.7.30/tobacco_v1_0/saved_img/',
+                    test_rgb=True, test_spectra=True, get_delta=False)

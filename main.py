@@ -60,6 +60,8 @@ def main():
         img_data = np.frombuffer(data_total, dtype=np.float32).reshape((Config.nRows, Config.nBands, -1))\
                      .transpose(0, 2, 1)
         rgb_data = np.frombuffer(rgb_data_total, dtype=np.uint8).reshape((Config.nRgbRows, Config.nRgbCols, -1))
+
+        # OFFSET compensate
         if Config.offset_vertical < 0:
             # 纵向的补偿小于0，那就意味着光谱图要上移才能补上，那么我们应该补偿SPEC相机的全 0 图像
             new_conserve_part, real_part = img_data[:abs(Config.offset_vertical) // 4, ...],\
@@ -80,7 +82,7 @@ def main():
         mask_result = (mask_spec | mask_rgb).astype(np.uint8)
 
         # control the size of the output masks
-        masks = [cv2.resize(mask.astype(np.uint8), Config.target_size) for mask in [mask_spec, mask_rgb]]
+        masks = [cv2.resize(mask.astype(np.uint8), Config.target_size) for mask in [mask_result, ]]
         # 写出
         output_fifos = [mask_fifo_path, ]
         for fifo, mask in zip(output_fifos, masks):

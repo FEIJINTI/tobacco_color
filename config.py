@@ -31,8 +31,8 @@ class Config:
     rgb_size_threshold = 4
 
     # mask parameter
-    target_size = (256, 1024)  # (Width, Height) of mask
+    target_size = (1024, 1024)  # (Width, Height) of mask
 
     # save part
-    offset_vertical = -70
+    offset_vertical = 0
 
