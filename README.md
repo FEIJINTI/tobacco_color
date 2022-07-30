@@ -129,7 +129,13 @@
 
 引入了RGB和光谱图像的原因，这里牵扯到图像对齐的问题。
 
-这里可以看到对齐的结果：
+### 对齐检测算法
+
+理论大概是这样，但是这不重要啦，简单来说就是偏差平面里头计算响应强度，这是当时的草稿。
+
+![截屏2022-07-30 09.23.13](https://raw.githubusercontent.com/Karllzy/imagebed/main/img/%E6%88%AA%E5%B1%8F2022-07-30%2009.23.13.png)
+
+实现以后这里可以看到对齐的结果，算法实现在`main_test.py`里头的`calculate_delta()`：
 
 ![Figure_1](https://raw.githubusercontent.com/Karllzy/imagebed/main/img/Figure_1.png)
 
@@ -143,3 +149,29 @@
 ![Figure_4](https://raw.githubusercontent.com/Karllzy/imagebed/main/img/Figure_4.png)
 
 这张图片里的上下偏差则达到了2.6厘米左右。
+
+### 图像拍摄脉冲触发问题
+
+2022年7月30日我们进行了二次实验，本来以为会得到一个恒定的偏差结果，但是，情况并不像我们想的那样：
+
+![截屏2022-07-30 09.18.15](https://raw.githubusercontent.com/Karllzy/imagebed/main/img/%E6%88%AA%E5%B1%8F2022-07-30%2009.18.15.png)
+
+
+
+从这张图可以看到，两张图的偏差大概是上下10像素，RGB偏上，左右偏差19像素，RGB偏左，
+
+但是！RGB图像明显是扭曲的，这显然是由于触发导致的。
+
+从其他图片来看：
+
+![截屏2022-07-30 09.19.28](https://raw.githubusercontent.com/Karllzy/imagebed/main/img/%E6%88%AA%E5%B1%8F2022-07-30%2009.19.28.png)
+
+明显也存在图像扭曲的情况，偏差情况是：
+
+![截屏2022-07-30 09.41.34](https://raw.githubusercontent.com/Karllzy/imagebed/main/img/%E6%88%AA%E5%B1%8F2022-07-30%2009.41.34.png)这张图上下已经对不上了，用它计算的偏差不具备参考价值。
+
+![截屏2022-07-30 09.20.34](https://raw.githubusercontent.com/Karllzy/imagebed/main/img/%E6%88%AA%E5%B1%8F2022-07-30%2009.20.34.png)
+
+偏差的影响，也可从这幅图当中看到，这幅图的上下偏差达到了惊人的200像素，明显考虑是触发有问题了，不然偏差值至少是恒定的。
+
+结论是考虑RGB相机的触发存在一定问题。

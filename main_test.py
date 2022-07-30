@@ -70,7 +70,7 @@ class TestMain:
                     print(delta)
                 self.merge(rgb_img=rgb_img, rgb_mask=rgb_mask,
                            spec_img=spec_img[..., [21, 3, 0]], spec_mask=spec_mask,
-                           file_name=rgb_file_name)
+                           rgb_file_name=rgb_file_name, spec_file_name=spec_file_name)
 
     def test_rgb(self, rgb_img, img_name):
         rgb_mask = self._rgb_detector.predict(rgb_img)
@@ -93,13 +93,14 @@ class TestMain:
         return spec_mask
 
     @staticmethod
-    def merge(rgb_img, rgb_mask, spec_img, spec_mask, file_name):
+    def merge(rgb_img, rgb_mask, spec_img, spec_mask, rgb_file_name, spec_file_name):
         mask_result = (spec_mask | rgb_mask).astype(np.uint8)
         mask_result = mask_result.repeat(Config.blk_size, axis=0).repeat(Config.blk_size, axis=1).astype(np.uint8)
         fig, axs = plt.subplots(3, 2)
-        axs[0, 0].set_title(file_name)
+        axs[0, 0].set_title(rgb_file_name)
         axs[0, 0].imshow(rgb_img)
         axs[1, 0].imshow(spec_img)
+        axs[1, 0].set_title(spec_file_name)
         axs[2, 0].imshow(mask_result)
         axs[0, 1].imshow(rgb_mask)
         axs[1, 1].imshow(spec_mask)
@@ -107,7 +108,7 @@ class TestMain:
         plt.show()
         return mask_result
 
-    def calculate_delta(self, rgb_img, spec_img, search_area_size=(200, 200), eps=1):
+    def calculate_delta(self, rgb_img, spec_img, search_area_size=(400, 200), eps=1):
         rgb_grey, spec_grey = cv2.cvtColor(rgb_img, cv2.COLOR_RGB2GRAY), cv2.cvtColor(spec_img, cv2.COLOR_RGB2GRAY)
         _, rgb_bin = cv2.threshold(rgb_grey, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
         _, spec_bin = cv2.threshold(spec_grey, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
@@ -161,5 +162,5 @@ class TestMain:
 
 if __name__ == '__main__':
     testor = TestMain()
-    testor.pony_run(test_path=r'/Volumes/LENOVO_USB_HDD/zhouchao/728-tobacco/correct',
-                    test_rgb=True, test_spectra=True, get_delta=False)
+    testor.pony_run(test_path=r'/Volumes/LENOVO_USB_HDD/zhouchao/0730saved_img/correct',
+                    test_rgb=True, test_spectra=True, get_delta=True)
