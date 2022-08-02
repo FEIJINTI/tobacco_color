@@ -122,8 +122,10 @@ d. 阀板的脉冲分频系数,>=2即可                          h. 发个da和
                 print(e)
                 print(f"你给的指令: {value} 咋看都不对")
                 return
-            if (value <= 256) and (value >= 1):
+            if (value <= 257) and (value >= 1):
                 cmd = b'\x00\x0A' + 'te'.encode('ascii') + f"{value:08d}".encode('ascii')
+                if value == 257:
+                    print("你发现了这个隐藏的流水灯指令😝😝😝，好厉害。")
                 self.last_cmd = value
             else:
                 print(f'你给的指令: {value} 值不对，我们有256个阀门, 范围是 [1, 256]')
