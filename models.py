@@ -255,7 +255,7 @@ class ManualTree:
 
 # 机器学习像素模型类
 class PixelModelML:
-    def __init__(self, pixel_model_path):
+    def __init__(self, pixel_model_path=None):
         with open(pixel_model_path, "rb") as f:
             self.dt = pickle.load(f)
 
@@ -409,7 +409,7 @@ class SpecDetector(Detector):
         if x_yellow.shape[0] == 0:
             return non_yellow_things
         else:
-            tobacco = self.pixel_model_ml.predict(x_yellow[..., Config.green_bands]) > 0.5
+            tobacco = self.pixel_model_ml.predict_bin(x_yellow) < 0.5
 
             non_yellow_things[yellow_things] = ~tobacco
             # 杂质mask中将背景赋值为0,将杂质赋值为1
@@ -434,6 +434,14 @@ class SpecDetector(Detector):
     def blk_predict(self, data):
         blk_result_array = self.blk_model.predict(data)
         return blk_result_array
+
+
+class DecisionTree(DecisionTreeClassifier):
+    def predict_bin(self, feature):
+        res = self.predict(feature)
+        res[res <= 1] = 0
+        res[res > 1] = 1
+        return res
 
 
 if __name__ == '__main__':

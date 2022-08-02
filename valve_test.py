@@ -154,7 +154,7 @@ d. 阀板的脉冲分频系数,>=2即可                          h. 发个da和
 class VirtualValve:
     def __init__(self):
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # 声明socket类型，同时生成链接对象
-        self.client.connect(('localhost', 13452))  # 建立一个链接，连接到本地的6969端口
+        self.client.connect(('localhost', 13452))  # 建立一个链接，连接到本地的13452端口
 
     def run(self):
         while True:
@@ -166,7 +166,6 @@ class VirtualValve:
 
 if __name__ == '__main__':
     import argparse
-
     parser = argparse.ArgumentParser(description='阀门测程序')
     parser.add_argument('-c', default=False, action='store_true', help='是否是开个客户端', required=False)
     args = parser.parse_args()
