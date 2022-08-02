@@ -260,7 +260,7 @@ class PixelModelML:
             self.dt = pickle.load(f)
 
     def predict(self, feature):
-        pixel_result_array = self.dt.predict(feature)
+        pixel_result_array = self.dt.predict_bin(feature)
         return pixel_result_array
 
 
@@ -409,7 +409,7 @@ class SpecDetector(Detector):
         if x_yellow.shape[0] == 0:
             return non_yellow_things
         else:
-            tobacco = self.pixel_model_ml.predict_bin(x_yellow) < 0.5
+            tobacco = self.pixel_model_ml.predict(x_yellow) < 0.5
 
             non_yellow_things[yellow_things] = ~tobacco
             # 杂质mask中将背景赋值为0,将杂质赋值为1

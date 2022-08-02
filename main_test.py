@@ -168,5 +168,5 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run image test or ')
     tester = TestMain()
     tester.pony_run(test_path=r'/home/lzy/2022.7.30/tobacco_v1_0/saved_img/',
-                    test_rgb=False, test_spectra=False, get_delta=False)
+                    test_rgb=True, test_spectra=True, get_delta=False)
 
