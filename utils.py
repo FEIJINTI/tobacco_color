@@ -140,6 +140,61 @@ def size_threshold(img, blk_size, threshold):
     return mask
 
 
+def read_envi_ascii(file_name, save_xy=False, hdr_file_name=None):
+    """
+    Read envi ascii file. Use ENVI ROI Tool -> File -> output ROIs to ASCII...
+
+    :param file_name: file name of ENVI ascii file
+    :param hdr_file_name: hdr file name for a "BANDS" vector in the output
+    :param save_xy: save the x, y position on the first two cols of the result vector
+    :return: dict {class_name: vector, ...}
+    """
+    number_line_start_with = "; Number of ROIs: "
+    roi_name_start_with, roi_npts_start_with = "; ROI name: ", "; ROI npts: "
+    data_start_with = ";   ID"
+    class_num, class_names, class_nums, vectors = 0, [], [], []
+    with open(file_name, 'r') as f:
+        for line_text in f:
+            if line_text.startswith(number_line_start_with):
+                class_num = int(line_text[len(number_line_start_with):])
+            elif line_text.startswith(roi_name_start_with):
+                class_names.append(line_text[len(roi_name_start_with):-1])
+            elif line_text.startswith(roi_npts_start_with):
+                class_nums.append(int(line_text[len(roi_name_start_with):-1]))
+            elif line_text.startswith(data_start_with):
+                col_list = list(filter(None, line_text[1:].split(" ")))
+                assert (len(class_names) == class_num) and (len(class_names) == len(class_nums))
+                break
+            elif line_text.startswith(";"):
+                continue
+        for vector_rows in class_nums:
+            vector_str = ''
+            for i in range(vector_rows):
+                vector_str += f.readline()
+            vector = np.fromstring(vector_str, dtype=np.float, sep=" ").reshape(-1, len(col_list))
+            assert vector.shape[0] == vector_rows
+            vector = vector[:, 3:] if not save_xy else vector[:, 1:]
+            vectors.append(vector)
+            f.readline()  # suppose to read a blank line
+    if hdr_file_name is not None:
+        bands = []
+        with open(hdr_file_name, 'r') as f:
+            start_bands = False
+            for line_text in f:
+                if start_bands:
+                    if line_text.endswith(",\n"):
+                        bands.append(float(line_text[:-2]))
+                    else:
+                        bands.append(float(line_text))
+                        break
+                elif line_text.startswith("wavelength ="):
+                    start_bands = True
+        bands = np.array(bands, dtype=np.float)
+        vectors.append(bands)
+        class_names.append("BANDS")
+    return dict(zip(class_names, vectors))
+
+
 if __name__ == '__main__':
     color_dict = {(0, 0, 255): "yangeng", (255, 0, 0): "bejing", (0, 255, 0): "hongdianxian",
                   (255, 0, 255): "chengsebangbangtang", (0, 255, 255): "lvdianxian"}
