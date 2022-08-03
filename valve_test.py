@@ -32,6 +32,7 @@ d. 阀板的脉冲分频系数,>=2即可                          h. 发个da和
             value = input(self.reminder)
             if value == 'q':
                 print("好的，我退出啦")
+                self.s.close()
                 break
             else:
                 self.process_cmd(value)
