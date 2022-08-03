@@ -4,7 +4,7 @@ import numpy as np
 
 
 class ValveTest:
-    def __init__(self):
+    def __init__(self, host=None, port=13452):
         self.last_cmd = None
         self.reminder = """======================================================================================
 快，给我个指令😉😉😉︎：
@@ -17,11 +17,11 @@ d. 阀板的脉冲分频系数,>=2即可                          h. 发个da和
 给q指令我就退出。
 ======================================================================================\n"""
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # 创建 socket 对象
-        # host = socket.gethostname()  # 获取本地主机名
-        host = '192.168.10.8'
-        port = 13452  # 设置端口
+        self.s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        host = socket.gethostname() if host is None else host  # 获取本地主机名
+        print(f"Service Address {host}, {port}.")
         self.s.bind((host, port))  # 绑定端口
-        self.s.listen(1)  # 等待客户端连接
+        self.s.listen(5)  # 等待客户端连接
         self.c = None
 
     def run(self):
@@ -153,9 +153,9 @@ d. 阀板的脉冲分频系数,>=2即可                          h. 发个da和
 
 
 class VirtualValve:
-    def __init__(self):
+    def __init__(self, host, port):
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # 声明socket类型，同时生成链接对象
-        self.client.connect(('192.168.10.8', 13452))  # 建立一个链接，连接到本地的13452端口
+        self.client.connect((host, port))  # 建立一个链接，连接到本地的13452端口
 
     def run(self):
         while True:
@@ -167,15 +167,16 @@ class VirtualValve:
 
 if __name__ == '__main__':
     import argparse
-
     parser = argparse.ArgumentParser(description='阀门测程序')
     parser.add_argument('-c', default=False, action='store_true', help='是否是开个客户端', required=False)
+    parser.add_argument('-m', default='192.168.10.8', help='指定master主机名')
+    parser.add_argument('-p', default=13452, help='指定端口')
     args = parser.parse_args()
     if args.c:
         print("运行客户机")
-        virtual_valve = VirtualValve()
+        virtual_valve = VirtualValve(host=args.m, port=args.p)
         virtual_valve.run()
     else:
         print("运行主机")
-        valve_tester = ValveTest()
+        valve_tester = ValveTest(host=args.m, port=args.p)
         valve_tester.run()
