@@ -1,4 +1,3 @@
-import logging
 import socket
 
 import numpy as np
@@ -18,7 +17,8 @@ d. 阀板的脉冲分频系数,>=2即可                          h. 发个da和
 给q指令我就退出。
 ======================================================================================\n"""
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # 创建 socket 对象
-        host = socket.gethostname()  # 获取本地主机名
+        # host = socket.gethostname()  # 获取本地主机名
+        host = '192.168.10.8'
         port = 13452  # 设置端口
         self.s.bind((host, port))  # 绑定端口
         self.s.listen(1)  # 等待客户端连接
@@ -56,10 +56,10 @@ d. 阀板的脉冲分频系数,>=2即可                          h. 发个da和
     def process_cmd(self, value):
         if value == 'a':
             # a.开始命令
-            cmd = b'\x00\x03' + 'sa'.encode('ascii') + b'\xFF'
+            cmd = b'\x00\x03' + 'st'.encode('ascii') + b'\xFF'
         elif value == 'b':
             # b.停止命令
-            cmd = b'\x00\x03' + 'sb'.encode('ascii') + b'\xFF'
+            cmd = b'\x00\x03' + 'sp'.encode('ascii') + b'\xFF'
         elif value.startswith('c'):
             # c. 设置光谱相机分频，得是4的倍数而且>=8，格式：c,8
             checker = lambda x: (x % 4 == 0) and (x >= 8)
@@ -122,13 +122,14 @@ d. 阀板的脉冲分频系数,>=2即可                          h. 发个da和
                 print(e)
                 print(f"你给的指令: {value} 咋看都不对")
                 return
-            if (value <= 257) and (value >= 1):
-                cmd = b'\x00\x0A' + 'te'.encode('ascii') + f"{value:08d}".encode('ascii')
-                if value == 257:
-                    print("你发现了这个隐藏的流水灯指令😝😝😝，好厉害。")
+            if (value <= 256) and (value >= 1):
+                cmd = b'\x00\x0A' + 'te'.encode('ascii') + f"{value - 1:08d}".encode('ascii')
                 self.last_cmd = value
+            elif value == 257:
+                cmd = b'\x00\x0A' + 'te'.encode('ascii') + f"{value:08d}".encode('ascii')
+                print("恭喜你发现了这个隐藏的257号流水灯指令😝😝😝，好厉害。")
             else:
-                print(f'你给的指令: {value} 值不对，我们有256个阀门, 范围是 [1, 256]')
+                print(f'你给的指令: {value} 值不对，我们有256个阀门, 范围是 [1, 256]，略大一个好像也可以')
                 return
         self.send(cmd)
 
@@ -154,7 +155,7 @@ d. 阀板的脉冲分频系数,>=2即可                          h. 发个da和
 class VirtualValve:
     def __init__(self):
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # 声明socket类型，同时生成链接对象
-        self.client.connect(('localhost', 13452))  # 建立一个链接，连接到本地的13452端口
+        self.client.connect(('192.168.10.8', 13452))  # 建立一个链接，连接到本地的13452端口
 
     def run(self):
         while True:
@@ -166,6 +167,7 @@ class VirtualValve:
 
 if __name__ == '__main__':
     import argparse
+
     parser = argparse.ArgumentParser(description='阀门测程序')
     parser.add_argument('-c', default=False, action='store_true', help='是否是开个客户端', required=False)
     args = parser.parse_args()
