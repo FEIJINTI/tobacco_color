@@ -178,6 +178,8 @@
 
 ## 喷阀检查
 
+### 喷阀检验脚本
+
 为了能够有效的对喷阀进行检查，我写了一个用于测试的小socket，这个小socket的使用方式是这样的：
 
 开启服务端：
@@ -199,6 +201,22 @@ python valve_test.py -c
 同时运行这两个可以在本地看到测试结果，不用看zynq那边的结果：
 
 ![截屏2022-08-02 14.16.24](https://raw.githubusercontent.com/Karllzy/imagebed/main/img/%E6%88%AA%E5%B1%8F2022-08-02%2014.16.24.png)
+
+### 只使用RGB或SPEC预测
+
+只使用RGB或者SPEC预测时，使用如下代码：
+
+只使用rgb：
+
+```shell
+python main.py -oc
+```
+
+只使用SPEC
+
+```shell
+python main.py -os
+```
 
 # 代码加密
 
