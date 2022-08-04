@@ -1,5 +1,6 @@
 import socket
 
+import cv2
 import numpy as np
 
 
@@ -102,6 +103,7 @@ m. 模式切换：测下一个喷阀还是重发？
         elif value == 'g':
             # g.发个da和db完全重叠的mask
             mask_a, mask_b = np.eye(256, dtype=np.uint8), np.eye(256, dtype=np.uint8)
+            mask_a, mask_b = [cv2.resize(mask, mask_size) for mask in [mask_a, mask_b]]
             len_a, data_a = self.format_data(mask_a)
             len_b, data_b = self.format_data(mask_b)
             cmd = len_a + 'da'.encode('ascii') + data_a
@@ -110,6 +112,7 @@ m. 模式切换：测下一个喷阀还是重发？
         elif value == 'h':
             # h.发个da和db呈现出X形的mask
             mask_a, mask_b = np.eye(256, dtype=np.uint8), np.eye(256, dtype=np.uint8).T
+            mask_a, mask_b = [cv2.resize(mask, mask_size) for mask in [mask_a, mask_b]]
             len_a, data_a = self.format_data(mask_a)
             len_b, data_b = self.format_data(mask_b)
             cmd = len_a + 'da'.encode('ascii') + data_a
@@ -185,6 +188,7 @@ if __name__ == '__main__':
     parser.add_argument('-m', default='192.168.10.8', help='指定master主机名')
     parser.add_argument('-p', default=13452, help='指定端口')
     args = parser.parse_args()
+    mask_size = (1024, 256)  # size of cv (Width, Height)
     if args.c:
         print("运行客户机")
         virtual_valve = VirtualValve(host=args.m, port=args.p)
