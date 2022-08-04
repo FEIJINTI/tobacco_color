@@ -200,5 +200,40 @@ python valve_test.py -c
 
 ![截屏2022-08-02 14.16.24](https://raw.githubusercontent.com/Karllzy/imagebed/main/img/%E6%88%AA%E5%B1%8F2022-08-02%2014.16.24.png)
 
+# 代码加密
 
+本来想使用pyarmor，但是它在加密过程中一直重复不停的进行下载，这太麻烦了，而且还要考虑到兼容性问题，所以果断放弃，后来发现简单的方案是这样的，把python编译成字节码就行：
 
+## 简单方案
+
+这方案的好处在于不需要联网，但是破解成本比较低。
+
+```shell
+python -m compileall -f -q -b "tobacco_color"
+```
+
+然后接下来找到所有的.py文件并删除就可以了：
+
+```shell
+find . -name "*.py" -type f -print -exec rm -rf {} \;
+```
+
+这个看起来好危险，我还是觉得到目录下一个个删除比较好。
+
+## JMPY的方案
+
+安装
+
+```she
+pip install jmpy3
+```
+
+加密
+
+```shell
+jmpy -i "tobacco_color" [-o output dir]
+```
+
+加密后的文件默认存储在 dist/project_name/ 下
+
+最后，根据测试的pyarmor并没有起到让人满意的加密效果，这令人很担忧，所以我暂时不购买测试。
