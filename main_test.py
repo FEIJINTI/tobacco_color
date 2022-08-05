@@ -59,11 +59,18 @@ class TestMain:
                 with open(os.path.join(test_path, spec_file_name), 'rb') as f:
                     data = f.read()
                 spec_img = transmit.BeforeAfterMethods.spec_data_post_process(data)
+                if convert:
+                    spec_img_show = np.asarray(np.clip(spec_img[..., [21, 3, 0]] * 255, a_min=0, a_max=255),
+                                               dtype=np.uint8)
+                    cv2.imwrite(rgb_file_name + '.bmp', spec_img_show[..., ::-1])
+
                 spec_mask = self.test_spec(spec_img, img_name=spec_file_name)
             if test_rgb:
                 with open(os.path.join(test_path, rgb_file_name), 'rb') as f:
                     data = f.read()
                 rgb_img = transmit.BeforeAfterMethods.rgb_data_post_process(data)
+                if convert:
+                    cv2.imwrite(os.path.join(test_path, rgb_file_name + '.bmp'), rgb_img[..., ::-1])
                 rgb_mask = self.test_rgb(rgb_img, img_name=rgb_file_name)
             if test_rgb and test_spectra:
                 if get_delta:
@@ -165,8 +172,8 @@ class TestMain:
 
 if __name__ == '__main__':
     import argparse
+
     parser = argparse.ArgumentParser(description='Run image test or ')
     tester = TestMain()
-    tester.pony_run(test_path=r'/home/lzy/2022.7.30/tobacco_v1_0/saved_img/',
-                    test_rgb=True, test_spectra=True, get_delta=False)
-
+    tester.pony_run(test_path=r'E:\zhouchao\8.4\yangeng',
+                    test_rgb=True, test_spectra=True, get_delta=False, convert=True)
