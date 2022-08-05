@@ -11,8 +11,8 @@ def main(only_spec=False, only_color=False):
     spec_detector = SpecDetector(blk_model_path=Config.blk_model_path, pixel_model_path=Config.pixel_model_path)
     rgb_detector = RgbDetector(tobacco_model_path=Config.rgb_tobacco_model_path,
                                background_model_path=Config.rgb_background_model_path)
-    _, _ = spec_detector.predict(np.ones(Config.nRows, Config.nCols, Config.nBands)*0.4),\
-           rgb_detector.predict(np.ones(Config.nRgbRows, Config.nRgbCols, Config.nRgbBands)*0.4)
+    _, _ = spec_detector.predict(np.ones(Config.nRows, Config.nCols, Config.nBands, dtype=float)*0.4),\
+           rgb_detector.predict(np.ones((Config.nRgbRows, Config.nRgbCols, Config.nRgbBands), dtype=np.uint8)*40)
     total_len = Config.nRows * Config.nCols * Config.nBands * 4  # float型变量, 4个字节
     total_rgb = Config.nRgbRows * Config.nRgbCols * Config.nRgbBands * 1  # int型变量
     if not os.access(img_fifo_path, os.F_OK):
