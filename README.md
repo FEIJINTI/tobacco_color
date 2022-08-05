@@ -255,3 +255,44 @@ jmpy -i "tobacco_color" [-o output dir]
 加密后的文件默认存储在 dist/project_name/ 下
 
 最后，根据测试的pyarmor并没有起到让人满意的加密效果，这令人很担忧，所以我暂时不购买测试。
+
+# 开机自启动
+
+要带有图形化界面的开机自启动不能把程序放到init.d底下，不然的话图形化界面还没起来就启动程序，会崩掉。
+
+## 以.Desktop文件形式
+
+ 1. 首先写一个`~/run.sh`，内容如下：
+
+    ```shel
+    conda activate tobacco/deepo
+    python /home/<user_name>/tobacco_color/main.py -os # 这里的os表示only spectral，还有oc，不加就是都用上。
+    ```
+
+ 2. 然后，写一个.desktop文件
+
+    ```shel
+    [Desktop Entry]
+    Type=Application
+    Name=Tobacco
+    Exec=/home/<user_name>/run.sh
+    Icon=/home/<user_name>/Pictures/albert # 图标
+    Comment=烟草识别程序
+    X-GNOME-Autostart-enabled=true
+    ```
+
+3. 把这个.desktop文件放到自启动目录下：`/home/<user_name>/.config/autostart`
+
+## 图形化形式
+
+上一步当中run.sh是无论如何都要有的
+
+![img](https://raw.githubusercontent.com/Karllzy/imagebed/main/img/word-image-61.jpeg)
+
+中文里边叫开机自启动，
+
+![img](https://raw.githubusercontent.com/Karllzy/imagebed/main/img/word-image-63.jpeg)
+
+甚至可以加入延时：
+
+![img](https://raw.githubusercontent.com/Karllzy/imagebed/main/img/word-image-15.png)
