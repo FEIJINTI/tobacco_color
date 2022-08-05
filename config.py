@@ -24,10 +24,10 @@ class Config:
     spec_size_threshold = 3
 
     # rgb模型参数
-    rgb_tobacco_model_path = r"models/tobacco_dt_2022-07-26_15-57.model"
-    rgb_background_model_path = r"models/background_dt_2022-07-27_08-11.model"
+    rgb_tobacco_model_path = r"models/tobacco_dt_2022-08-05_10-38.model"
+    rgb_background_model_path = r"models/background_dt_2022-08-05_10-41.model"
     threshold_low, threshold_high = 10, 230
-    threshold_s = 175
+    threshold_s = 190
     rgb_size_threshold = 4
 
     # mask parameter
@@ -35,4 +35,3 @@ class Config:
 
     # save part
     offset_vertical = 0
-
