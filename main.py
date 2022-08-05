@@ -3,6 +3,7 @@ import cv2
 import time
 import numpy as np
 
+import utils
 from config import Config
 from models import RgbDetector, SpecDetector
 
@@ -66,8 +67,10 @@ def main(only_spec=False, only_color=False):
             mask_spec = spec_detector.predict(img_data)
             mask_rgb = rgb_detector.predict(rgb_data)
 
-        # control the size of the output masks
-        masks = [cv2.resize(mask.astype(np.uint8), Config.target_size) for mask in [mask_spec, mask_rgb]]
+        # 进行喷阀的合并
+        masks = [utils.valve_merge(mask, merge_size=Config.valve_merge_size) for mask in [mask_spec, mask_rgb]]
+        # control the size of the output masks, 在resize前，图像的宽度是和喷阀对应的
+        masks = [cv2.resize(mask.astype(np.uint8), Config.target_size) for mask in masks]
         # 写出
         output_fifos = [mask_fifo_path, rgb_mask_fifo_path]
         for fifo, mask in zip(output_fifos, masks):

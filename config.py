@@ -32,6 +32,7 @@ class Config:
 
     # mask parameter
     target_size = (1024, 1024)  # (Width, Height) of mask
+    valve_merge_size = 2  # 每两个喷阀当中有任意一个出现杂质则认为都是杂质
 
     # save part
     offset_vertical = 0

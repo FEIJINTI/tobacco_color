@@ -150,6 +150,16 @@ def size_threshold(img, blk_size, threshold, last_end: np.ndarray = None) -> np.
     return mask
 
 
+def valve_merge(img: np.ndarray, merge_size: int = 2) -> np.ndarray:
+    assert img.shape[1] % merge_size == 0  # 列数必须能够被整除
+    img_shape = (img.shape[1], img.shape[0])
+    img = img.reshape((img.shape[0], img.shape[1]//merge_size, merge_size))
+    img = np.sum(img, axis=2)
+    img[img > 0] = 1
+    img = cv2.resize(img.astype(np.uint8), dsize=img_shape)
+    return img
+
+
 def read_envi_ascii(file_name, save_xy=False, hdr_file_name=None):
     """
     Read envi ascii file. Use ENVI ROI Tool -> File -> output ROIs to ASCII...
@@ -210,3 +220,7 @@ if __name__ == '__main__':
                   (255, 0, 255): "chengsebangbangtang", (0, 255, 255): "lvdianxian"}
     dataset = read_labeled_img("data/dataset", color_dict=color_dict, is_ps_color_space=False)
     lab_scatter(dataset, class_max_num=20000, is_3d=False, is_ps_color_space=False)
+    # a = np.array([[1, 1, 0, 0, 1, 0, 0, 1], [0, 0, 1, 0, 0, 1, 1, 1]]).astype(np.uint8)
+    # a.repeat(3, axis=0)
+    # b = valve_merge(a, 2)
+    # print(b)
