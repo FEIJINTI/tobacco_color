@@ -175,5 +175,5 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Run image test or ')
     tester = TestMain()
-    tester.pony_run(test_path=r'E:\zhouchao\8.4\yangeng',
-                    test_rgb=True, test_spectra=False, get_delta=False, convert=False)
+    tester.pony_run(test_path=r'E:\zhouchao\8.4\zazhi',
+                    test_rgb=True, test_spectra=True, get_delta=False, convert=False)
