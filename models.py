@@ -339,16 +339,19 @@ class SpecDetector(Detector):
         self.blk_model = None
         self.pixel_model_ml = None
         self.load(blk_model_path, pixel_model_path)
+        self.spare_part = np.zeros((Config.blk_size//2, Config.nCols))
 
     def load(self, blk_model_path, pixel_model_path):
         self.pixel_model_ml = PixelModelML(pixel_model_path)
         self.blk_model = BlkModel(blk_model_path)
 
-    def predict(self, img_data):
+    def predict(self, img_data: np.ndarray, save_part: bool = False) -> np.ndarray:
         pixel_predict_result = self.pixel_predict_ml_dilation(data=img_data, iteration=1)
         blk_predict_result = self.blk_predict(data=img_data)
         mask = (pixel_predict_result & blk_predict_result).astype(np.uint8)
-        mask = size_threshold(mask, Config.blk_size, Config.spec_size_threshold)
+        if save_part:
+            self.spare_part = mask[-(Config.blk_size//2):, :]
+        mask = size_threshold(mask, Config.blk_size, Config.spec_size_threshold, self.spare_part)
         return mask
 
     def save(self, *args, **kwargs):

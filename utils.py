@@ -132,13 +132,21 @@ def lab_scatter(dataset: dict, class_max_num=None, is_3d=False, is_ps_color_spac
     plt.show()
 
 
-def size_threshold(img, blk_size, threshold, last_end: np.ndarray=None) -> np.ndarray:
+def size_threshold(img, blk_size, threshold, last_end: np.ndarray = None) -> np.ndarray:
     mask = img.reshape(img.shape[0], img.shape[1] // blk_size, blk_size).sum(axis=2). \
         reshape(img.shape[0] // blk_size, blk_size, img.shape[1] // blk_size).sum(axis=1)
     mask[mask <= threshold] = 0
     mask[mask > threshold] = 1
     if last_end is not None:
-        mask_up = np.concatenate((last_end, img[:-(blk_size//2), :]))
+        half_blk_size = blk_size // 2
+        assert (last_end.shape[0] == half_blk_size) and (last_end.shape[1] == img.shape[1])
+        mask_up = np.concatenate((last_end, img[:-half_blk_size, :]), axis=0)
+        mask_up_right = np.concatenate((mask_up[:, half_blk_size:],
+                                        np.zeros((img.shape[0], half_blk_size), dtype=np.uint8)), axis=1)
+        mask_up = size_threshold(mask_up, blk_size, threshold)
+        mask_up_right = size_threshold(mask_up_right, blk_size, threshold)
+        mask[:-1, :] = mask_up[1:, :]
+        mask[:-1, 1:] = mask_up_right[1:, :-1]
     return mask
 
 

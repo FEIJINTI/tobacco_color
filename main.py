@@ -23,6 +23,7 @@ def main(only_spec=False, only_color=False):
         os.mkfifo(mask_fifo_path, 0o777)
     if not os.access(rgb_mask_fifo_path, os.F_OK):
         os.mkfifo(rgb_mask_fifo_path, 0o777)
+
     while True:
         fd_img = os.open(img_fifo_path, os.O_RDONLY)
         fd_rgb = os.open(rgb_fifo_path, os.O_RDONLY)
