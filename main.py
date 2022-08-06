@@ -58,9 +58,11 @@ def main(only_spec=False, only_color=False):
         if only_spec:
             # 光谱识别
             mask_spec = spec_detector.predict(img_data)
+            mask_rgb = rgb_detector.predict(rgb_data)
             mask_rgb = np.zeros_like(mask_spec, dtype=np.uint8)
         elif only_color:
             # rgb识别
+            mask_spec = spec_detector.predict(img_data)
             mask_rgb = rgb_detector.predict(rgb_data)
             mask_spec = np.zeros_like(mask_rgb, dtype=np.uint8)
         else:
