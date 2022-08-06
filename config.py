@@ -1,4 +1,5 @@
-import torch
+import os
+
 import numpy as np
 
 
@@ -36,3 +37,6 @@ class Config:
 
     # save part
     offset_vertical = 0
+
+    # logging
+    root_dir = os.path.split(os.path.realpath(__file__))[0]
