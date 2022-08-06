@@ -153,11 +153,16 @@ def size_threshold(img, blk_size, threshold, last_end: np.ndarray = None) -> np.
 def valve_merge(img: np.ndarray, merge_size: int = 2) -> np.ndarray:
     assert img.shape[1] % merge_size == 0  # 列数必须能够被整除
     img_shape = (img.shape[1], img.shape[0])
-    img = img.reshape((img.shape[0], img.shape[1]//merge_size, merge_size))
+    img = img.reshape((img.shape[0], img.shape[1] // merge_size, merge_size))
     img = np.sum(img, axis=2)
     img[img > 0] = 1
     img = cv2.resize(img.astype(np.uint8), dsize=img_shape)
     return img
+
+
+def valve_expend(img: np.ndarray) -> np.ndarray:
+    kernel = np.ones((1, 3), np.uint8)
+    return cv2.dilate(img, kernel)
 
 
 def read_envi_ascii(file_name, save_xy=False, hdr_file_name=None):

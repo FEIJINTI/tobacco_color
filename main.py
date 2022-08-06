@@ -77,7 +77,7 @@ def main(only_spec=False, only_color=False):
             mask_spec = spec_detector.predict(img_data)
             mask_rgb = rgb_detector.predict(rgb_data)
         # 进行喷阀的合并
-        masks = [utils.valve_merge(mask, merge_size=Config.valve_merge_size) for mask in [mask_spec, mask_rgb]]
+        masks = [utils.valve_expend(mask) for mask in [mask_spec, mask_rgb]]
         # control the size of the output masks, 在resize前，图像的宽度是和喷阀对应的
         masks = [cv2.resize(mask.astype(np.uint8), Config.target_size) for mask in masks]
         # 写出
