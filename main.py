@@ -67,17 +67,17 @@ def main(only_spec=False, only_color=False):
             logging.error(f'毁灭性错误!收到的rgb数据长度为{len(rgb_data)}无法转化成指定形状 {e}')
         if only_spec:
             # 光谱识别
-            mask_spec = spec_detector.predict(img_data)
-            mask_rgb = rgb_detector.predict(rgb_data)
+            mask_spec = spec_detector.predict(img_data).astype(np.uint8)
+            _ = rgb_detector.predict(rgb_data)
             mask_rgb = np.zeros_like(mask_spec, dtype=np.uint8)
         elif only_color:
             # rgb识别
-            mask_spec = spec_detector.predict(img_data)
-            mask_rgb = rgb_detector.predict(rgb_data)
+            _ = spec_detector.predict(img_data)
+            mask_rgb = rgb_detector.predict(rgb_data).astype(np.uint8)
             mask_spec = np.zeros_like(mask_rgb, dtype=np.uint8)
         else:
-            mask_spec = spec_detector.predict(img_data)
-            mask_rgb = rgb_detector.predict(rgb_data)
+            mask_spec = spec_detector.predict(img_data).astype(np.uint8)
+            mask_rgb = rgb_detector.predict(rgb_data).astype(np.uint8)
         # 进行喷阀的合并
         masks = [utils.valve_expend(mask) for mask in [mask_spec, mask_rgb]]
         # control the size of the output masks, 在resize前，图像的宽度是和喷阀对应的

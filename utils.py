@@ -162,7 +162,8 @@ def valve_merge(img: np.ndarray, merge_size: int = 2) -> np.ndarray:
 
 def valve_expend(img: np.ndarray) -> np.ndarray:
     kernel = np.ones((1, 3), np.uint8)
-    return cv2.dilate(img, kernel)
+    img = cv2.dilate(img, kernel, iterations=1)
+    return img
 
 
 def read_envi_ascii(file_name, save_xy=False, hdr_file_name=None):
@@ -221,11 +222,13 @@ def read_envi_ascii(file_name, save_xy=False, hdr_file_name=None):
 
 
 if __name__ == '__main__':
-    color_dict = {(0, 0, 255): "yangeng", (255, 0, 0): "bejing", (0, 255, 0): "hongdianxian",
-                  (255, 0, 255): "chengsebangbangtang", (0, 255, 255): "lvdianxian"}
-    dataset = read_labeled_img("data/dataset", color_dict=color_dict, is_ps_color_space=False)
-    lab_scatter(dataset, class_max_num=20000, is_3d=False, is_ps_color_space=False)
-    # a = np.array([[1, 1, 0, 0, 1, 0, 0, 1], [0, 0, 1, 0, 0, 1, 1, 1]]).astype(np.uint8)
+    # color_dict = {(0, 0, 255): "yangeng", (255, 0, 0): "bejing", (0, 255, 0): "hongdianxian",
+    #               (255, 0, 255): "chengsebangbangtang", (0, 255, 255): "lvdianxian"}
+    # dataset = read_labeled_img("data/dataset", color_dict=color_dict, is_ps_color_space=False)
+    # lab_scatter(dataset, class_max_num=20000, is_3d=False, is_ps_color_space=False)
+    a = np.array([[1, 1, 0, 0, 1, 0, 0, 1], [0, 0, 1, 0, 0, 1, 1, 1]]).astype(np.uint8)
     # a.repeat(3, axis=0)
     # b = valve_merge(a, 2)
     # print(b)
+    c = valve_expend(a)
+    print(c)
