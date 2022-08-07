@@ -27,7 +27,7 @@ def main(only_spec=False, only_color=False):
         os.mkfifo(mask_fifo_path, 0o777)
     if not os.access(rgb_mask_fifo_path, os.F_OK):
         os.mkfifo(rgb_mask_fifo_path, 0o777)
-
+    logging.info(f"请注意!正在以调试模式运行程序，输出的信息可能较多。")
     while True:
         fd_img = os.open(img_fifo_path, os.O_RDONLY)
         fd_rgb = os.open(rgb_fifo_path, os.O_RDONLY)
@@ -35,9 +35,13 @@ def main(only_spec=False, only_color=False):
         # spec data read
         data = os.read(fd_img, total_len)
         if len(data) < 3:
-            threshold = int(float(data))
-            Config.spec_size_threshold = threshold
-            logging.info('[INFO] Get spec threshold: ', threshold)
+            try:
+                threshold = int(float(data))
+                Config.spec_size_threshold = threshold
+                logging.info('[INFO] Get spec threshold: ', threshold)
+            except Exception as e:
+                logging.error(f'毁灭性错误:收到长度小于3却无法转化为整数spec_size_threshold的网络报文，报文内容为 {data},'
+                              f' 错误为 {e}.')
         else:
             data_total = data
         os.close(fd_img)
@@ -49,7 +53,8 @@ def main(only_spec=False, only_color=False):
                 Config.rgb_size_threshold = rgb_threshold
                 logging.info(f'Get rgb threshold: {rgb_threshold}')
             except Exception as e:
-                logging.error(f'毁灭性错误:收到长度小于3却无法转化为整数的数据，{e}.')
+                logging.error(f'毁灭性错误:收到长度小于3却无法转化为整数spec_size_threshold的网络报文，报文内容为 {total_rgb},'
+                              f' 错误为 {e}.')
             continue
         else:
             rgb_data_total = rgb_data
@@ -78,8 +83,10 @@ def main(only_spec=False, only_color=False):
         else:
             mask_spec = spec_detector.predict(img_data).astype(np.uint8)
             mask_rgb = rgb_detector.predict(rgb_data).astype(np.uint8)
-        # 进行喷阀的合并
+        # 进行多个喷阀的合并
         masks = [utils.valve_expend(mask) for mask in [mask_spec, mask_rgb]]
+        # 进行喷阀同时开启限制
+
         # control the size of the output masks, 在resize前，图像的宽度是和喷阀对应的
         masks = [cv2.resize(mask.astype(np.uint8), Config.target_size) for mask in masks]
         # 写出
@@ -109,12 +116,9 @@ if __name__ == '__main__':
     rgb_mask_fifo_path = '/tmp/dkmask_rgb.fifo'
     # logging相关
     file_handler = logging.FileHandler(os.path.join(Config.root_dir, '.tobacco_algorithm.log'))
-    file_handler.setLevel(logging.WARNING)
+    file_handler.setLevel(logging.DEBUG if args.d else logging.WARNING)
     console_handler = logging.StreamHandler(sys.stdout)
-    if args.d:
-        console_handler.setLevel(logging.DEBUG)
-    else:
-        console_handler.setLevel(logging.WARNING)
+    console_handler.setLevel(logging.WARNING)
     logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s',
-                        handlers=[file_handler, console_handler])
+                        handlers=[file_handler, console_handler], level=logging.DEBUG)
     main(only_spec=args.os, only_color=args.oc)

@@ -60,6 +60,7 @@ class TestMain:
                     data = f.read()
                 spec_img = transmit.BeforeAfterMethods.spec_data_post_process(data)
                 if convert:
+                    # TODO: 完善这个文件转换功能
                     spec_img_show = np.asarray(np.clip(spec_img[..., [21, 3, 0]] * 255, a_min=0, a_max=255),
                                                dtype=np.uint8)
                     cv2.imwrite(rgb_file_name + '.bmp', spec_img_show[..., ::-1])

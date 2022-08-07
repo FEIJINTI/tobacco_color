@@ -4,16 +4,23 @@
 # @File: utils.py
 # @Software:PyCharm
 import glob
+import logging
 import os
 from queue import Queue
 
 import cv2
 import numpy as np
+from numpy.random import default_rng
 from matplotlib import pyplot as plt
 import re
 
 
 def natural_sort(l):
+    """
+    自然排序
+    :param l: 待排序
+    :return:
+    """
     convert = lambda text: int(text) if text.isdigit() else text.lower()
     alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
     return sorted(l, key=alphanum_key)
@@ -164,6 +171,32 @@ def valve_expend(img: np.ndarray) -> np.ndarray:
     kernel = np.ones((1, 3), np.uint8)
     img = cv2.dilate(img, kernel, iterations=1)
     return img
+
+
+def valve_limit(mask: np.ndarray, max_valve_num: int) -> np.ndarray:
+    """
+    用于限制阀门同时开启个数的函数
+    :param mask: 阀门开启mask,0,1格式，每个1对应一个阀门
+    :param max_valve_num: 最大阀门数量
+    :return:
+    """
+    assert (max_valve_num >= 5) and (max_valve_num < 50)
+    row_valve_count = np.sum(mask, axis=1)
+    if np.any(row_valve_count > max_valve_num):
+        over_rows_idx = np.argwhere(row_valve_count > max_valve_num).ravel()
+        logging.warning(f'发现单行喷阀数量{len(over_rows_idx)}超过限制，已限制到最大许可值{max_valve_num}')
+        over_rows = mask[over_rows_idx, :]
+
+        # a simple function to get lucky valves when too many valves appear in the same line
+        def process_row(each_row):
+            valve_idx = np.argwhere(each_row > 0).ravel()
+            lucky_valve_idx = default_rng().choice(valve_idx, max_valve_num)
+            new_row = np.zeros_like(each_row)
+            new_row[lucky_valve_idx] = 1
+            return new_row
+        limited_rows = np.apply_along_axis(process_row, 1, over_rows)
+        mask[over_rows_idx] = limited_rows
+    return mask
 
 
 def read_envi_ascii(file_name, save_xy=False, hdr_file_name=None):
