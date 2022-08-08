@@ -176,9 +176,9 @@
 
 结论是考虑RGB相机的触发存在一定问题。
 
-## 喷阀检查
+# 喷阀检查相关
 
-### 喷阀检验脚本
+## 喷阀检验脚本
 
 为了能够有效的对喷阀进行检查，我写了一个用于测试的小socket，这个小socket的使用方式是这样的：
 
@@ -202,7 +202,7 @@ python valve_test.py -c
 
 ![截屏2022-08-02 14.16.24](https://raw.githubusercontent.com/Karllzy/imagebed/main/img/%E6%88%AA%E5%B1%8F2022-08-02%2014.16.24.png)
 
-### 只使用RGB或SPEC预测
+## 仅使用RGB或SPEC预测以调节延时
 
 只使用RGB或者SPEC预测时，使用如下代码：
 
@@ -217,6 +217,16 @@ python main.py -oc
 ```shell
 python main.py -os
 ```
+
+## 同时开启喷阀数量限制
+
+由于喷阀的电源有限，所以必须对同时开启的喷阀数量加以限制，否则会造成流在导线上的电流过大，就像是在烧水。
+
+最大允许开启的喷阀数量$n$和电源功率$p$之间的关系如下：
+$$
+n = \frac{p}{12}
+$$
+这里$12 V \cdot A$是对应喷阀的电压和电流的乘积，建议在这个基础之上再进行数量除以$2$的操作，因为我们不可合并rgb和spec两个mask，所以如果当出现杂质时，仅对一个mask的最大值进行限定存在风险。
 
 # 代码加密
 
@@ -296,3 +306,32 @@ jmpy -i "tobacco_color" [-o output dir]
 甚至可以加入延时：
 
 ![img](https://raw.githubusercontent.com/Karllzy/imagebed/main/img/word-image-15.png)
+
+# 模拟运行与文件转换
+
+## 模拟运行
+
+需要模拟运行的话可以使用`main_test.py`脚本进行。模拟运行的方法如下：
+
+```shell
+python main_test.py /path/to/test
+```
+
+其中`/path/to/test`填写C程序抓取的运行时数据。运行后的数据如下：
+
+![image-20220808135053854](https://raw.githubusercontent.com/Karllzy/imagebed/main/img/image-20220808135053854.png)
+
+## 转换保存下来的buffer文件
+
+脚本用法:
+
+```shell
+python main_test.py /path/to/convert -convert_dir /output/dir -s
+```
+
+这里`path/to/convert`填写转换的buffer文件夹，文件夹需要是只有rgb和spec文件`/output/dir`填输出文件夹，如果输出文件夹不存在就会创建。如果不加`-s(--silent)`静默参数就会顺便显示预测的结果。
+
+转换后的图片经过测试可以正常在ENVI中打开：
+
+![image-20220808123044267](https://raw.githubusercontent.com/Karllzy/imagebed/main/img/image-20220808123044267.png)
+

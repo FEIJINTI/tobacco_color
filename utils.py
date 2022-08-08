@@ -182,7 +182,7 @@ def valve_limit(mask: np.ndarray, max_valve_num: int) -> np.ndarray:
     :param max_valve_num: 最大阀门数量
     :return:
     """
-    assert (max_valve_num >= 5) and (max_valve_num < 50)
+    assert (max_valve_num >= 1) and (max_valve_num < 50)
     row_valve_count = np.sum(mask, axis=1)
     if np.any(row_valve_count > max_valve_num):
         over_rows_idx = np.argwhere(row_valve_count > max_valve_num).ravel()

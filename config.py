@@ -34,7 +34,7 @@ class Config:
     # mask parameter
     target_size = (1024, 1024)  # (Width, Height) of mask
     valve_merge_size = 2  # 每两个喷阀当中有任意一个出现杂质则认为都是杂质
-    max_open_valve_limit = 49  # 最大同时开启喷阀限制,按照电流计算，当前的喷阀可以开启的喷阀 600W的电源 / 12V电源 = 50A, 一个阀门1A
+    max_open_valve_limit = 25  # 最大同时开启喷阀限制,按照电流计算，当前的喷阀可以开启的喷阀 600W的电源 / 12V电源 = 50A, 一个阀门1A
 
     # save part
     offset_vertical = 0

@@ -140,6 +140,7 @@ class TestMain:
             ax3 = fig.add_subplot(gs[1, 0])
             ax4 = fig.add_subplot(gs[1, 1])
             ax5 = fig.add_subplot(gs[2, :])
+
             fig.suptitle("Result")
 
             ax1.imshow(rgb_img)
@@ -219,7 +220,7 @@ if __name__ == '__main__':
     parser.add_argument('-convert_dir', default=None, help='是否将c语言采集的buffer进行转换')
     parser.add_argument('-s', '--silent', default=False, action='store_true', help='是否显示')
     args = parser.parse_args()
-    # file check
+    # file path check
     if args.convert_dir is not None:
         if os.path.exists(args.convert_dir):
             if not os.path.isdir(args.convert_dir):
@@ -230,7 +231,6 @@ if __name__ == '__main__':
         else:
             print(f"已创建需要存放转换文件的文件夹 {args.convert_dir}")
             os.makedirs(args.convert_dir, mode=0o777, exist_ok=False)
-
     tester = TestMain()
     tester.pony_run(test_path=args.path, test_rgb=args.test_rgb, test_spectra=args.test_spec,
                     get_delta=args.get_delta, convert_dir=args.convert_dir, silent=args.silent)
