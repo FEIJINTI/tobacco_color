@@ -86,7 +86,7 @@ def main(only_spec=False, only_color=False):
         # 进行多个喷阀的合并
         masks = [utils.valve_expend(mask) for mask in [mask_spec, mask_rgb]]
         # 进行喷阀同时开启限制
-
+        masks = [utils.valve_limit(mask, Config.max_open_valve_limit) for mask in masks]
         # control the size of the output masks, 在resize前，图像的宽度是和喷阀对应的
         masks = [cv2.resize(mask.astype(np.uint8), Config.target_size) for mask in masks]
         # 写出

@@ -14,6 +14,8 @@ from numpy.random import default_rng
 from matplotlib import pyplot as plt
 import re
 
+from config import Config
+
 
 def natural_sort(l):
     """
@@ -252,6 +254,24 @@ def read_envi_ascii(file_name, save_xy=False, hdr_file_name=None):
         vectors.append(bands)
         class_names.append("BANDS")
     return dict(zip(class_names, vectors))
+
+
+def generate_hdr(des='File Imported into ENVI.'):
+    template_file = f"""ENVI
+description = {{ {des}
+  }}
+samples = {Config.nCols}
+lines   = {Config.nRows}
+bands   = {Config.nBands}
+header offset = 0
+file type = ENVI Standard
+data type = 4
+interleave = bil
+sensor type = Unknown
+byte order = 0
+wavelength units = Unknown
+"""
+    return template_file
 
 
 if __name__ == '__main__':
