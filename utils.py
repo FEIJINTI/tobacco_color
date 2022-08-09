@@ -170,7 +170,7 @@ def valve_merge(img: np.ndarray, merge_size: int = 2) -> np.ndarray:
 
 
 def valve_expend(img: np.ndarray) -> np.ndarray:
-    kernel = np.ones((1, 3), np.uint8)
+    kernel = np.ones((1, Config.valve_horizontal_padding), np.uint8)
     img = cv2.dilate(img, kernel, iterations=1)
     return img
 
