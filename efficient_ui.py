@@ -24,11 +24,11 @@ class EfficientUI(object):
         rgb_receiver = transmit.FifoReceiver(fifo_path=rgb_fifo_path, output=rgb_img_queue, read_max_num=rgb_len)
         # 指令执行与图像流向控制
         # subscribers = {'detector': detector_queue, 'visualize': self.visual_queue, 'save': save_queue}
-        subscribers = {"detector": detector_queue}
+        subscribers = {"detector": detector_queue, 'save': save_queue, 'visualize': self.visual_queue}
         cmd_img_controller = transmit.CmdImgSplitMidware(rgb_queue=rgb_img_queue, spec_queue=spec_img_queue,
                                                          subscribers=subscribers)
         # 探测器
-        detector = transmit.ThreadDetector(input_queue=detector_queue, output_queue=mask_queue)
+        detector = transmit.ProcessDetector(input_queue=detector_queue, output_queue=mask_queue)
         # 发送
         sender = transmit.FifoSender(output_fifo_path=mask_fifo_path, source=mask_queue)
         # 启动所有线程

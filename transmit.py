@@ -295,7 +295,7 @@ class ThreadDetector(Transmitter):
 
 
 class ProcessDetector(Transmitter):
-    def __init__(self, input_queue: Queue, output_queue: Queue):
+    def __init__(self, input_queue: ImgQueue, output_queue: ImgQueue):
         super().__init__()
         self._input_queue, self._output_queue = input_queue, output_queue
         self._spec_detector = SpecDetector(blk_model_path=Config.blk_model_path,
@@ -305,7 +305,7 @@ class ProcessDetector(Transmitter):
         self._predict_thread = None
         self._thread_exit = threading.Event()
 
-    def set_source(self, img_queue: Queue):
+    def set_source(self, img_queue: ImgQueue):
         self._input_queue = img_queue
 
     def stop(self, *args, **kwargs):
