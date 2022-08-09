@@ -16,6 +16,7 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.gridspec import GridSpec
+import tqdm
 
 import transmit
 import utils
@@ -60,17 +61,19 @@ class TestMain:
                 rgb_img = transmit.BeforeAfterMethods.rgb_data_post_process(data)
                 _ = self.test_rgb(rgb_img, img_name=test_path)
             return
+        if silent and convert_dir is not None:
+            bar = tqdm.tqdm(desc='正在转换', total=len(rgb_file_names), ncols=80)
         for rgb_file_name, spec_file_name in zip(rgb_file_names, spec_file_names):
             rgb_temp, spec_temp = rgb_file_name[:], spec_file_name[:]
             assert rgb_temp.replace('rgb', '') == spec_temp.replace('spec', '')
             if test_spectra:
-                print(f"test spec file {spec_file_name}")
                 with open(os.path.join(test_path, spec_file_name), 'rb') as f:
                     data = f.read()
                 try:
                     spec_img = transmit.BeforeAfterMethods.spec_data_post_process(data)
                 except Exception as e:
-                    raise FileExistsError(f'文件 {spec_file_name} 读取失败. 请清理文件夹{test_path},去除{spec_file_name}')
+                    raise FileExistsError(f'文件 {spec_file_name} 读取失败,长度不对. 请清理文件夹{test_path},'
+                                          f'去除{spec_file_name}\n {e}')
 
                 if convert_dir is not None:
                     spec_img_show = np.asarray(np.clip(spec_img[..., [21, 3, 0]] * 255, a_min=0, a_max=255),
@@ -84,13 +87,13 @@ class TestMain:
                         f.write(hdr_string)
                 spec_mask = self.test_spec(spec_img, img_name=spec_file_name, show=False)
             if test_rgb:
-                print(f'test rgb file {rgb_file_name}')
                 with open(os.path.join(test_path, rgb_file_name), 'rb') as f:
                     data = f.read()
                 try:
                     rgb_img = transmit.BeforeAfterMethods.rgb_data_post_process(data)
                 except Exception as e:
-                    raise FileExistsError(f'文件 {rgb_file_name} 读取失败. 请清理文件夹{test_path}, 去除{rgb_file_name}')
+                    raise FileExistsError(f'文件 {rgb_file_name} 读取失败, 长度不对. 请清理文件夹{test_path},'
+                                          f' 去除{rgb_file_name} \n {e}')
 
                 if convert_dir is not None:
                     cv2.imwrite(os.path.join(convert_dir, rgb_file_name + '.bmp'), rgb_img[..., ::-1])
@@ -105,6 +108,8 @@ class TestMain:
                            spec_img=spec_img[..., [21, 3, 0]], spec_mask=spec_mask,
                            rgb_file_name=rgb_file_name, spec_file_name=spec_file_name,
                            show=not silent)
+                if silent and convert_dir is not None:
+                    bar.update()
 
     def test_rgb(self, rgb_img, img_name, show=True):
         rgb_mask = self._rgb_detector.predict(rgb_img)
