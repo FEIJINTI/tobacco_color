@@ -38,7 +38,7 @@ def main(only_spec=False, only_color=False):
             try:
                 threshold = int(float(data))
                 Config.spec_size_threshold = threshold
-                logging.info('[INFO] Get spec threshold: ', threshold)
+                logging.info(f'[INFO] Get spec threshold: {threshold}')
             except Exception as e:
                 logging.error(f'毁灭性错误:收到长度小于3却无法转化为整数spec_size_threshold的网络报文，报文内容为 {data},'
                               f' 错误为 {e}.')
@@ -116,9 +116,9 @@ if __name__ == '__main__':
     rgb_mask_fifo_path = '/tmp/dkmask_rgb.fifo'
     # logging相关
     file_handler = logging.FileHandler(os.path.join(Config.root_dir, '.tobacco_algorithm.log'))
-    file_handler.setLevel(logging.DEBUG if args.d else logging.WARNING)
+    file_handler.setLevel(logging.WARNING)
     console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(logging.WARNING)
+    console_handler.setLevel(logging.DEBUG if args.d else logging.WARNING)
     logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s',
                         handlers=[file_handler, console_handler], level=logging.DEBUG)
     main(only_spec=args.os, only_color=args.oc)
