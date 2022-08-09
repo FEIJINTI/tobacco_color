@@ -130,7 +130,7 @@ m. 模式切换：测下一个喷阀还是重发？
                 self.last_cmd = 1
             print(f'自动变化到 喷阀测试 {self.last_cmd}')
             value = self.last_cmd
-            cmd = b'\x00\x0A' + 'te'.encode('ascii') + f"{value:08d}".encode('ascii')
+            cmd = b'\x00\x0A' + 'te'.encode('ascii') + f"{value - 1:08d}".encode('ascii')
         else:
             try:
                 value = int(value)
