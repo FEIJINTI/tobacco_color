@@ -38,7 +38,7 @@ def main(only_spec=False, only_color=False):
             try:
                 threshold = int(float(data))
                 Config.spec_size_threshold = threshold
-                logging.info(f'[INFO] Get spec threshold: {threshold}')
+                logging.info(f'Get spec threshold: {threshold}')
             except Exception as e:
                 logging.error(f'毁灭性错误:收到长度小于3却无法转化为整数spec_size_threshold的网络报文，报文内容为 {data},'
                               f' 错误为 {e}.')
