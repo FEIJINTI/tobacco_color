@@ -11,7 +11,7 @@ from models import RgbDetector, SpecDetector
 import logging
 
 
-def main(only_spec=False, only_color=False, if_merge=False):
+def main(only_spec=False, only_color=False, if_merge=False, interval_time=None, delay_repeat_time=None):
     spec_detector = SpecDetector(blk_model_path=Config.blk_model_path, pixel_model_path=Config.pixel_model_path)
     rgb_detector = RgbDetector(tobacco_model_path=Config.rgb_tobacco_model_path,
                                background_model_path=Config.rgb_background_model_path)
@@ -28,6 +28,11 @@ def main(only_spec=False, only_color=False, if_merge=False):
     if not os.access(rgb_mask_fifo_path, os.F_OK):
         os.mkfifo(rgb_mask_fifo_path, 0o777)
     logging.info(f"请注意!正在以调试模式运行程序，输出的信息可能较多。")
+    if (interval_time is not None) and (delay_repeat_time is not None):
+        interval_time = float(interval_time) / 1000.0
+        delay_repeat_time = int(delay_repeat_time)
+        logging.warning(f'Delay {interval_time*1000:.2f}ms will be added per {delay_repeat_time} frames')
+        delay_repeat_time_count = 0
     while True:
         fd_img = os.open(img_fifo_path, os.O_RDONLY)
         fd_rgb = os.open(rgb_fifo_path, os.O_RDONLY)
@@ -59,7 +64,7 @@ def main(only_spec=False, only_color=False, if_merge=False):
         else:
             rgb_data_total = rgb_data
         os.close(fd_rgb)
-        # 识别
+        # 识别 read
         since = time.time()
         try:
             img_data = np.frombuffer(data_total, dtype=np.float32).reshape((Config.nRows, Config.nBands, -1)) \
@@ -70,6 +75,7 @@ def main(only_spec=False, only_color=False, if_merge=False):
             rgb_data = np.frombuffer(rgb_data_total, dtype=np.uint8).reshape((Config.nRgbRows, Config.nRgbCols, -1))
         except Exception as e:
             logging.error(f'毁灭性错误!收到的rgb数据长度为{len(rgb_data)}无法转化成指定形状 {e}')
+        # predict
         if only_spec:
             # 光谱识别
             mask_spec = spec_detector.predict(img_data).astype(np.uint8)
@@ -92,7 +98,13 @@ def main(only_spec=False, only_color=False, if_merge=False):
         masks = [cv2.resize(mask.astype(np.uint8), Config.target_size) for mask in masks]
         # merge the masks if needed
         if if_merge:
-            masks = [masks[0] | mask[1], mask[1]]
+            masks = [masks[0] | masks[1], masks[1]]
+        if (interval_time is not None) and (delay_repeat_time is not None):
+            delay_repeat_time_count += 1
+            if delay_repeat_time_count > delay_repeat_time:
+                logging.warning(f"Delay time {interval_time*1000:.2f}ms after {delay_repeat_time} frames")
+                delay_repeat_time_count = 0
+                time.sleep(interval_time)
         # 写出
         output_fifos = [mask_fifo_path, rgb_mask_fifo_path]
         for fifo, mask in zip(output_fifos, masks):
@@ -112,6 +124,8 @@ if __name__ == '__main__':
     parser.add_argument('-os', default=False, action='store_true', help='只进行光谱预测 only spec', required=False)
     parser.add_argument('-m', default=False, action='store_true', help='if merge the two masks', required=False)
     parser.add_argument('-d', default=False, action='store_true', help='是否使用DEBUG模式', required=False)
+    parser.add_argument('-dt', default=None,  help='delay time', required=False)
+    parser.add_argument('-df', default=None, help='delay occours after how many frames', required=False)
     args = parser.parse_args()
     # fifo 参数
     img_fifo_path = '/tmp/dkimg.fifo'
@@ -126,4 +140,4 @@ if __name__ == '__main__':
     console_handler.setLevel(logging.DEBUG if args.d else logging.WARNING)
     logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s',
                         handlers=[file_handler, console_handler], level=logging.DEBUG)
-    main(only_spec=args.os, only_color=args.oc, if_merge=args.m)
+    main(only_spec=args.os, only_color=args.oc, if_merge=args.m, interval_time=args.dt, delay_repeat_time=args.df)
