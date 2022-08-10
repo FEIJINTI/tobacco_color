@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Tobacco_Algorithm
+Exec=/home/dt/tobacco-color/deploy/main.sh
+Icon=/home/dt/tobacco-color/deploy/icon.jpeg
+Comment=烟草识别程序
+X-GNOME-Autostart-enabled=true

@@ -11,7 +11,7 @@ from models import RgbDetector, SpecDetector
 import logging
 
 
-def main(only_spec=False, only_color=False):
+def main(only_spec=False, only_color=False, if_merge=False):
     spec_detector = SpecDetector(blk_model_path=Config.blk_model_path, pixel_model_path=Config.pixel_model_path)
     rgb_detector = RgbDetector(tobacco_model_path=Config.rgb_tobacco_model_path,
                                background_model_path=Config.rgb_background_model_path)
@@ -79,6 +79,7 @@ def main(only_spec=False, only_color=False):
             # rgb识别
             _ = spec_detector.predict(img_data)
             mask_rgb = rgb_detector.predict(rgb_data).astype(np.uint8)
+            # mask_spec = mask_rgb
             mask_spec = np.zeros_like(mask_rgb, dtype=np.uint8)
         else:
             mask_spec = spec_detector.predict(img_data).astype(np.uint8)
@@ -89,6 +90,9 @@ def main(only_spec=False, only_color=False):
         masks = [utils.valve_limit(mask, Config.max_open_valve_limit) for mask in masks]
         # control the size of the output masks, 在resize前，图像的宽度是和喷阀对应的
         masks = [cv2.resize(mask.astype(np.uint8), Config.target_size) for mask in masks]
+        # merge the masks if needed
+        if if_merge:
+            masks = [masks[0] | mask[1], mask[1]]
         # 写出
         output_fifos = [mask_fifo_path, rgb_mask_fifo_path]
         for fifo, mask in zip(output_fifos, masks):
@@ -106,6 +110,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='主程序')
     parser.add_argument('-oc', default=False, action='store_true', help='只进行RGB彩色预测 only rgb', required=False)
     parser.add_argument('-os', default=False, action='store_true', help='只进行光谱预测 only spec', required=False)
+    parser.add_argument('-m', default=False, action='store_true', help='if merge the two masks', required=False)
     parser.add_argument('-d', default=False, action='store_true', help='是否使用DEBUG模式', required=False)
     args = parser.parse_args()
     # fifo 参数
@@ -116,9 +121,9 @@ if __name__ == '__main__':
     rgb_mask_fifo_path = '/tmp/dkmask_rgb.fifo'
     # logging相关
     file_handler = logging.FileHandler(os.path.join(Config.root_dir, '.tobacco_algorithm.log'))
-    file_handler.setLevel(logging.WARNING)
+    file_handler.setLevel(logging.DEBUG if args.d else logging.WARNING)
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(logging.DEBUG if args.d else logging.WARNING)
     logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s',
                         handlers=[file_handler, console_handler], level=logging.DEBUG)
-    main(only_spec=args.os, only_color=args.oc)
+    main(only_spec=args.os, only_color=args.oc, if_merge=args.m)
