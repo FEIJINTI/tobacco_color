@@ -4,6 +4,7 @@
 
 ## 如何进行模型训练和部署？
 1. 项目当中需要包含`data`和`models`这两个文件夹，请下载到当前文件夹下,这是链接：[data](https://macrosolid-my.sharepoint.com/personal/feijinti_miaow_fun/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Ffeijinti%5Fmiaow%5Ffun%2FDocuments%2FPycharmProjects%2Ftobacco%5Fcolor%2Fdata&ga=1), [models](https://macrosolid-my.sharepoint.com/:f:/g/personal/feijinti_miaow_fun/EiyBjWEX90JGn8S-e5Kh7N8B1GWvfvDcNbpleWDTwkDm1w?e=wyL4EF)
+
 2. 使用[01_dataset.ipynb](./01_dataset.ipynb) 进行数据集的分析文件格式需要设置为这种形式：
     ```text
     dataset
@@ -14,10 +15,62 @@
         ├── img1.bmp
         └── ...
     ```
+
 3. 使用[02_classification.ipynb](./02_classification.ipynb)进行训练
+
 4. 使用[03_data_update.ipynb](02_classification.ipynb)进行数据的更新与添加
+
 5. 使用`main_test.py`文件进行读图测试
+
 6. **部署**，复制`utils.py`、`models.py`、`main.py`、`models/`、`config.py`这5个文件或文件夹，运行main.py来提供预测服务。
+
+## 如何进行参数调节？
+
+所有的参数均位于项目文件夹下的`config.py`当中。
+
+```python
+class Config:
+    # 文件相关参数
+    nRows, nCols, nBands = 256, 1024, 22
+    nRgbRows, nRgbCols, nRgbBands = 1024, 4096, 3
+
+    # 需要设置的谱段等参数
+    selected_bands = [127, 201, 202, 294]
+    bands = [127, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210,
+             211, 212, 213, 214, 215, 216, 217, 218, 219, 294]
+    is_yellow_min = np.array([0.10167048, 0.1644719, 0.1598884, 0.31534621])
+    is_yellow_max = np.array([0.212984, 0.25896924, 0.26509268, 0.51943593])
+    is_black_threshold = np.asarray([0.1369, 0.1472, 0.1439, 0.1814])
+    black_yellow_bands = [0, 2, 3, 21]
+    green_bands = [i for i in range(1, 21)]
+
+    # 光谱模型参数
+    blk_size = 4  # 必须是2的倍数，不然会出错
+    pixel_model_path = r"./models/pixel_2022-08-02_15-22.model"
+    blk_model_path = r"./models/rf_4x4_c22_20_sen8_9.model"
+    spec_size_threshold = 3 # 光谱大小阈值
+
+    # rgb模型参数
+    rgb_tobacco_model_path = r"models/tobacco_dt_2022-08-05_10-38.model"
+    rgb_background_model_path = r"models/background_dt_2022-08-09_16-08.model"
+    threshold_low, threshold_high = 10, 230 # 亮度最高值和最低值
+    threshold_s = 190 # 饱和度最高值允许值，超过该饱和度会被当作杂质
+    rgb_size_threshold = 4 # RGB大小阈值（在运行时会被界面修改）
+
+    # mask parameter
+    target_size = (1024, 1024)  # (Width, Height) of mask
+    valve_merge_size = 2  # 每两个喷阀当中有任意一个出现杂质则认为都是杂质
+    valve_horizontal_padding = 3  # 喷阀横向膨胀的尺寸，应该是奇数,3时表示左右各膨胀1
+    max_open_valve_limit = 25  # 最大同时开启喷阀限制,按照电流计算，当前的喷阀可以开启的喷阀 600W的电源 / 12V电源 = 50A, 一个阀门1A
+
+    # save part
+    offset_vertical = 0
+
+    # logging
+    root_dir = os.path.split(os.path.realpath(__file__))[0]
+```
+
+
 
 
 ## 训练的原理

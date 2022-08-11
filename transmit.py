@@ -1,7 +1,10 @@
+import multiprocessing
 import os
 import threading
 from multiprocessing import Process, Queue
 import time
+from multiprocessing.synchronize import Lock
+from threading import Lock
 
 import cv2
 
@@ -11,13 +14,15 @@ import functools
 import numpy as np
 from config import Config
 from models import SpecDetector, RgbDetector
-from typing import Any
+from typing import Any, Union
 import logging
 logging.basicConfig(format='%(asctime)s %(levelname)s %(name)s %(message)s',
                     level=logging.WARNING)
 
 
 class Transmitter(object):
+    _io_lock: Union[Lock, Lock]
+
     def __init__(self, job_name:str, run_process:bool = False):
         self.output = None
         self.job_name = job_name
@@ -25,6 +30,7 @@ class Transmitter(object):
         self._thread_stop = threading.Event()
         self._thread_stop.clear()
         self._running_handler = None
+        self._io_lock = multiprocessing.Lock() if run_process else threading.Lock()
 
     def set_source(self, *args, **kwargs):
         """
@@ -35,13 +41,13 @@ class Transmitter(object):
         """
         raise NotImplementedError
 
-    def set_output(self, output: ImgQueue):
+    def set_output(self, *args, **kwargs):
         """
-        设置单个输出源
+        设置输出源
         :param output:
         :return:
         """
-        self.output = output
+        raise NotImplementedError
 
     def start(self, *args, **kwargs):
         """
@@ -113,6 +119,44 @@ class BeforeAfterMethods:
             return rgb_img
 
 
+class FileReceiver(Transmitter):
+    def __init__(self, job_name:str, input_dir: str, output_queue:ImgQueue, speed: int=3, name_pattern=None):
+        super(FileReceiver, self).__init__(job_name=job_name, run_process=False)
+        self.input_dir = input_dir
+        self.send_speed = speed
+        self.file_names = None
+        self.name_pattern = name_pattern
+        self.file_idx = 0
+        self.output_queue = None
+        self.set_source(input_dir, name_pattern)
+        self.set_output(output_queue)
+
+    def set_source(self, input_dir, name_pattern=None):
+        self.name_pattern = name_pattern if name_pattern is not None else self.name_pattern
+        file_names = os.listdir(input_dir)
+        if len(file_names) == 0:
+            logging.warning('指定了空的文件夹')
+        if self.name_pattern is not None:
+            file_names = [file_name for file_name in file_names if (self.name_pattern in file_name)]
+        else:
+            file_names = file_names
+
+        with self._io_lock:
+            self.file_names = file_names
+            self.file_idx = 0
+
+    def set_output(self, output: ImgQueue):
+        with self._io_lock:
+            self.output_queue = output
+
+    @Transmitter.job_decorator
+    def job_func(self, *args, **kwargs):
+        with self._io_lock:
+            self.file_idx += 1
+            if self.file_idx == len()
+            file_name = self.file_names[self.file_idx]
+
+
 class FifoReceiver(Transmitter):
     def __init__(self, job_name:str, fifo_path: str, output: ImgQueue,
                  read_max_num: int, msg_queue=None):
@@ -169,31 +213,23 @@ class FifoSender(Transmitter):
             os.mkfifo(output_fifo_path, 0o777)
         self._output_fifo_path = output_fifo_path
 
-    def start(self, pre_process=None, name='fifo_receiver'):
-        self._running_thread = threading.Thread(target=self._send_thread_func, name=name,
-                                                args=(pre_process, ))
-        self._running_thread.start()
 
-    def stop(self):
-        self._need_stop.set()
-
-    def _send_thread_func(self, pre_process=None):
+    def job_func(self, pre_process, *args, **kwargs):
         """
         接收线程
 
         :param pre_process:
         :return:
         """
-        while not self._need_stop.is_set():
-            if self._input_source.empty():
-                continue
-            data = self._input_source.get()
-            if pre_process is not None:
-                data = pre_process(data)
-            output_fifo = os.open(self._output_fifo_path, os.O_WRONLY)
-            os.write(output_fifo, data)
-            os.close(output_fifo)
-        self._need_stop.clear()
+        if self._input_source.empty():
+            return
+        data = self._input_source.get()
+        if pre_process is not None:
+            data = pre_process(data)
+        output_fifo = os.open(self._output_fifo_path, os.O_WRONLY)
+        os.write(output_fifo, data)
+        os.close(output_fifo)
+
 
     def __del__(self):
         self.stop()
