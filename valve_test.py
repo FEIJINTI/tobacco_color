@@ -35,7 +35,16 @@ m. 模式切换：测下一个喷阀还是重发？
         print("我在等连接...")
         self.c, addr = self.s.accept()  # 建立客户端连接
         print('和它的链接建立成功了：', addr)
+        self.c.settimeout(0.1)
         while True:
+            data = ''
+            try:
+                data = self.c.recv(1024)
+            except Exception as e:
+                print(f"===================================================================")
+            if len(data) > 0:
+                print("receive data!!!")
+                print(data)
             value = input(self.reminder)
             if value == 'q':
                 print("好的，我退出啦")
