@@ -74,6 +74,11 @@ class Transmitter(object):
             self._thread_stop.set()
             self._running_handler = None
 
+    def __del__(self):
+        self.stop()
+        if self._running_handler is not None:
+            self._running_handler.join()
+
     @staticmethod
     def job_decorator(func):
         functools.wraps(func)
@@ -128,10 +133,11 @@ class FileReceiver(Transmitter):
         self.name_pattern = name_pattern
         self.file_idx = 0
         self.output_queue = None
+        self.preprocess_method = None
         self.set_source(input_dir, name_pattern)
         self.set_output(output_queue)
 
-    def set_source(self, input_dir, name_pattern=None):
+    def set_source(self, input_dir:str, name_pattern:str=None, preprocess_method:callable=None):
         self.name_pattern = name_pattern if name_pattern is not None else self.name_pattern
         file_names = os.listdir(input_dir)
         if len(file_names) == 0:
@@ -153,8 +159,16 @@ class FileReceiver(Transmitter):
     def job_func(self, *args, **kwargs):
         with self._io_lock:
             self.file_idx += 1
-            if self.file_idx == len()
+            if self.file_idx >= len(self.file_names):
+                self.file_idx = 0
             file_name = self.file_names[self.file_idx]
+        file_name = os.path.join(self.input_dir, file_name)
+        with open(file_name, 'rb') as f:
+            data = f.read()
+        if self.preprocess_method is not None:
+            data = self.preprocess_method(data)
+        self.output_queue.put(data)
+
 
 
 class FifoReceiver(Transmitter):
