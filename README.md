@@ -388,3 +388,48 @@ python main_test.py /path/to/convert -convert_dir /output/dir -s
 
 ![image-20220808123044267](https://raw.githubusercontent.com/Karllzy/imagebed/main/img/image-20220808123044267.png)
 
+# 多线程读取与多进程预测
+
+## 多线程与进程总体结构图
+
+![MultiThread](https://raw.githubusercontent.com/Karllzy/imagebed/main/img/MultiThread.png)
+
+## 多线程读取
+
+为了能够避免IO的等待，我们使用了开销相对较小的线程来实现多线程的数据读取。
+
+因为很多时候我们需要读图测试，所以我们写了一个FileReceiver类，用法大概就像测试文件里这样：
+
+```python
+    def test_file_receiver(self):
+        logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        image_queue = ImgQueue()
+        file_receiver = FileReceiver(job_name='rgb img receive', input_dir='../data', output_queue=image_queue,
+                                     speed=0.5, name_pattern=None)
+        virtual_data = np.zeros((1024, 4096, 3), dtype=np.uint8)
+        file_receiver.start(need_time=True, virtual_data=virtual_data)
+        for i in range(10):
+            data = image_queue.get()
+            time_record = data[0]
+            logging.info(f'Spent {(time.time() - time_record) * 1000:.2f}ms to get image with shape {data[-1].shape}')
+            self.assertEqual(data[-1].shape, (1024, 4096, 3))
+        file_receiver.stop()
+```
+
+测试结果如下所示：
+
+> 2022-08-17 23:46:09,742 - root - INFO - rgb img receive thread start.
+> 2022-08-17 23:46:09,754 - root - INFO - Spent 0.04ms to get image with shape (1024, 4096, 3)
+> 2022-08-17 23:46:10,259 - root - INFO - sleep 0.5s ...
+> 2022-08-17 23:46:10,276 - root - INFO - Spent 0.92ms to get image with shape (1024, 4096, 3)
+> 2022-08-17 23:46:10,780 - root - INFO - sleep 0.5s ...
+> 2022-08-17 23:46:10,789 - root - INFO - Spent 0.79ms to get image with shape (1024, 4096, 3)
+> 2022-08-17 23:46:11,293 - root - INFO - sleep 0.5s ...
+> 2022-08-17 23:46:11,301 - root - INFO - Spent 0.81ms to get image with shape (1024, 4096, 3)
+> 2022-08-17 23:46:11,802 - root - INFO - sleep 0.5s ...
+> 2022-08-17 23:46:11,810 - root - INFO - Spent 0.77ms to get image with shape (1024, 4096, 3)
+> 2022-08-17 23:46:12,314 - root - INFO - sleep 0.5s ...
+> 2022-08-17 23:46:12,315 - root - INFO - rgb img receive thread stop.
+
+这里我们得到了一个惊人的数据传递速度，只花了将近1ms，这速度看着很不错哦。接下来我们把这东西变成多进程。
+

@@ -186,7 +186,8 @@ def valve_limit(mask: np.ndarray, max_valve_num: int) -> np.ndarray:
     row_valve_count = np.sum(mask, axis=1)
     if np.any(row_valve_count > max_valve_num):
         over_rows_idx = np.argwhere(row_valve_count > max_valve_num).ravel()
-        logging.warning(f'发现单行喷阀数量{len(over_rows_idx)}超过限制，已限制到最大许可值{max_valve_num}')
+        logging.warning(f'发现有{len(over_rows_idx)}行的单行喷阀数量超过限制，原喷阀数量为{row_valve_count[over_rows_idx]}，'
+                        f'已全部限制到最大许可值{max_valve_num}')
         over_rows = mask[over_rows_idx, :]
 
         # a simple function to get lucky valves when too many valves appear in the same line
