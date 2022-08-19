@@ -18,18 +18,21 @@ from models import SpecDetector, RgbDetector
 from typing import Any, Union
 import logging
 
+def test_func(*args, **kwargs):
+    print('test_func')
+    print(kwargs)
+    return 'test_func'
 
 class Transmitter(object):
-    _io_lock: Union[Lock, Lock]
 
     def __init__(self, job_name: str, run_process: bool = False):
         self.output = None
         self.job_name = job_name
         self.run_process = run_process  # If true, run process when started else run thread.
-        self._thread_stop = threading.Event()
-        self._thread_stop.clear()
+        self._stop_event = threading.Event()
+        self._stop_event.clear()
         self._running_handler = None
-        self._io_lock = multiprocessing.Lock() if run_process else threading.Lock()
+        self._stateful_things = {}
 
     def set_source(self, *args, **kwargs):
         """
@@ -59,6 +62,7 @@ class Transmitter(object):
         if not self.run_process:
             self._running_handler = threading.Thread(target=self.job_func, name=name, args=args, kwargs=kwargs)
         else:
+            kwargs.update({'_stateful_things': self._stateful_things})
             self._running_handler = Process(target=self.job_func, name=name, daemon=True, args=args, kwargs=kwargs)
         self._running_handler.start()
 
@@ -70,7 +74,7 @@ class Transmitter(object):
         :return:
         """
         if self._running_handler is not None:
-            self._thread_stop.set()
+            self._stop_event.set()
             self._running_handler = None
 
     def __del__(self):
@@ -83,15 +87,27 @@ class Transmitter(object):
         @functools.wraps(func)
         def wrapper(self, *args, **kwargs):
             logging.info(f'{self.job_name} {"process" if self.run_process else "thread"} start.')
-            while not self._thread_stop.is_set():
+            if self.run_process:
+                self._stateful_things = kwargs['_stateful_things']
+            while not self._stop_event.is_set():
                 func(self, *args, **kwargs)
             logging.info(f'{self.job_name} {"process" if self.run_process else "thread"} stop.')
-            self._thread_stop.clear()
-
+            self._stop_event.clear()
         return wrapper
 
     def job_func(self, *args, **kwargs):
         raise NotImplementedError
+
+    def __getstate__(self):
+        self.stop()
+        state = self.__dict__.copy()
+        state['_stop_event'] = None
+        state['_stateful_things'] = {}
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self._stop_event = threading.Event()
 
 
 class BeforeAfterMethods:
@@ -125,9 +141,9 @@ class BeforeAfterMethods:
 
 
 class FileReceiver(Transmitter):
-    def __init__(self, input_dir: str, output_queue: ImgQueue, speed: float = 3.0, name_pattern: str=None,
-                 job_name: str = 'file_receiver', ):
-        super(FileReceiver, self).__init__(job_name=job_name)
+    def __init__(self, input_dir: str, output_queue: ImgQueue, speed: float = 3.0, name_pattern: str = None,
+                 job_name: str = 'file_receiver', run_process: bool = False):
+        super(FileReceiver, self).__init__(job_name=job_name, run_process=run_process)
         self.input_dir = input_dir
         self.send_speed = speed
         self.file_names = None
@@ -139,6 +155,7 @@ class FileReceiver(Transmitter):
         self.set_output(output_queue)
 
     def set_source(self, input_dir: str, name_pattern: str = None, preprocess_method: callable = None):
+        self.stop()
         self.name_pattern = name_pattern if name_pattern is not None else self.name_pattern
         file_names = os.listdir(input_dir)
         if len(file_names) == 0:
@@ -148,13 +165,13 @@ class FileReceiver(Transmitter):
         else:
             file_names = file_names
 
-        with self._io_lock:
-            self.file_names = file_names
-            self.file_idx = 0
+        # with self._io_lock:
+        self.file_names = file_names
+        self.file_idx = 0
 
     def set_output(self, output: ImgQueue):
         self.stop()
-        self.output_queue = output
+        self._stateful_things['output_queue'] = output
 
     @Transmitter.job_decorator
     def job_func(self, need_time=False, *args, **kwargs):
@@ -162,14 +179,14 @@ class FileReceiver(Transmitter):
         发送文件
 
         :param need_time: 是否需要发送时间戳
-        :param kwargs: virtual_data: 虚拟的数据，用于测试
+        :param kwargs: output_queue: 以进程模式运行时需要, virtual_data: 虚拟的数据，用于测试
         :return:
         """
-        with self._io_lock:
-            self.file_idx += 1
-            if self.file_idx >= len(self.file_names):
-                self.file_idx = 0
-            file_name = self.file_names[self.file_idx]
+        logging.debug(f'{self.job_name} start.')
+        self.file_idx += 1
+        if self.file_idx >= len(self.file_names):
+            self.file_idx = 0
+        file_name = self.file_names[self.file_idx]
         file_name = os.path.join(self.input_dir, file_name)
         with open(file_name, 'rb') as f:
             data = f.read()
@@ -179,7 +196,7 @@ class FileReceiver(Transmitter):
             data = (time.time(), data)
         if 'virtual_data' in kwargs:
             data = (*data, kwargs['virtual_data'])
-        self.output_queue.put(data)
+        self._stateful_things['output_queue'].put(data)
         time.sleep(self.send_speed)
         logging.info(f'sleep {self.send_speed}s ...')
 
@@ -197,15 +214,13 @@ class FifoReceiver(Transmitter):
 
     def set_source(self, fifo_path: str):
         self.stop()
-        with self._io_lock:
-            if not os.access(fifo_path, os.F_OK):
-                os.mkfifo(fifo_path, 0o777)
-            self._input_fifo_path = fifo_path
+        if not os.access(fifo_path, os.F_OK):
+            os.mkfifo(fifo_path, 0o777)
+        self._input_fifo_path = fifo_path
 
     def set_output(self, output: ImgQueue):
         self.stop()
-        with self._io_lock:
-            self._output_queue = output
+        self._output_queue = output
 
     @Transmitter.job_decorator
     def job_func(self, post_process_func=None):
@@ -221,6 +236,12 @@ class FifoReceiver(Transmitter):
             data = post_process_func(data)
         self._output_queue.put(data)
         os.close(input_fifo)
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state['_input_fifo_path'] = None
+        state['_output_queue'] = None
+        return state
 
 
 class FifoSender(Transmitter):
@@ -308,7 +329,7 @@ class CmdImgSplitMidware(Transmitter):
                 # 如果是图片，交给预测的人
                 for name, subscriber in self._subscribers.items():
                     item = (spec_data, rgb_data)
-                    subscriber.safe_put(item)
+                    subscriber.fifo_put(item)
             else:
                 # 否则程序出现毁灭性问题，立刻崩
                 logging.critical('两个相机传回的数据没有对上')
@@ -375,7 +396,7 @@ class ThreadDetector(Transmitter):
             if not self._input_queue.empty():
                 spec, rgb = self._input_queue.get()
                 mask = self.predict(spec, rgb)
-                self._output_queue.safe_put(mask)
+                self._output_queue.fifo_put(mask)
         self._thread_exit.clear()
 
 

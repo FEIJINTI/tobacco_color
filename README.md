@@ -390,7 +390,7 @@ python main_test.py /path/to/convert -convert_dir /output/dir -s
 
 # 多线程读取与多进程预测
 
-## 多线程与进程总体结构图
+## 总体结构图
 
 ![MultiThread](https://raw.githubusercontent.com/Karllzy/imagebed/main/img/MultiThread.png)
 
@@ -433,3 +433,31 @@ python main_test.py /path/to/convert -convert_dir /output/dir -s
 
 这里我们得到了一个惊人的数据传递速度，只花了将近1ms，这速度看着很不错哦。接下来我们把这东西变成多进程。
 
+## 多进程读取
+
+为了能够实现多进程的读取，我们遇到了一个很奇怪的问题如下：
+
+>  File "/Users/lizhenye/miniforge3/lib/python3.9/multiprocessing/reduction.py", line 60, in dump
+>     ForkingPickler(file, protocol).dump(obj)
+> TypeError: cannot pickle '_thread.lock' object
+
+经过Google，我们发现问题在于使用了类方法,但经过更近一步的查找原因，我们发现，问题不出在类上，而是出在类里头包含了一些不可以被pickle的带有状态的文件，比如Queue和Fifo等等这些被Linux管理的底层资源。
+
+所以我们把找到了pickle会调用的`__getstate__`和`__setstate__`这两个python自带的类内方法，这两个方法分别在类被调用的时候将类内的变量交给pickle序列化和返序列化。所以我们对于所有类别的基础类别做出了修订：
+
+```python
+def __getstate__(self):
+    self.stop()
+    state = self.__dict__.copy()
+    state['_stop_event'] = None
+    state['_stateful_things'] = {}
+    return state
+
+def __setstate__(self, state):
+    self.__dict__.update(state)
+    self._stop_event = threading.Event()  
+```
+
+就是在序列化之前把不能序列化的stateful_things收起来，把`_stop_event`这个线程间同步用的东西也给收起来，然后就可以复制类内所有的变量新的独立的进程运行了，新的进程会拥有自己进程内独立的`_stop_event`，这就导致我们其实已经失去了对于这个新开辟的子进程的控制，除非它自己调用自己的self.stop。
+
+好了，我觉得这个地方有点蠢，之后再改。

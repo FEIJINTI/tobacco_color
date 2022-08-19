@@ -63,7 +63,7 @@ class ImgQueue(Queue):
             self.queue.clear()
             self.not_full.notify_all()
 
-    def safe_put(self, item):
+    def fifo_put(self, item):
         if self.full():
             _ = self.get()
             return False
