@@ -30,7 +30,8 @@ class TestMain:
         self._spec_detector = SpecDetector(blk_model_path=Config.blk_model_path,
                                            pixel_model_path=Config.pixel_model_path)
         self._rgb_detector = RgbDetector(tobacco_model_path=Config.rgb_tobacco_model_path,
-                                         background_model_path=Config.rgb_background_model_path)
+                                         background_model_path=Config.rgb_background_model_path,
+                                         ai_path=Config.ai_path)
 
     def pony_run(self, test_path, test_spectra=False, test_rgb=False,
                  convert_dir=None, get_delta=False, silent=False):

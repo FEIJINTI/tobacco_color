@@ -20,16 +20,18 @@ class Config:
 
     # 光谱模型参数
     blk_size = 4  # 必须是2的倍数，不然会出错
-    pixel_model_path = r"./models/pixel_2022-08-02_15-22.model"
-    blk_model_path = r"./models/rf_4x4_c22_20_sen8_9.model"
+    pixel_model_path = r"./weights/pixel_2022-08-02_15-22.model"
+    blk_model_path = r"./weights/rf_4x4_c22_20_sen8_9.model"
     spec_size_threshold = 3
 
     # rgb模型参数
-    rgb_tobacco_model_path = r"models/tobacco_dt_2022-08-05_10-38.model"
-    rgb_background_model_path = r"models/background_dt_2022-08-09_16-08.model"
+    rgb_tobacco_model_path = r"weights/tobacco_dt_2022-08-05_10-38.model"
+    rgb_background_model_path = r"weights/background_dt_2022-08-09_16-08.model"
     threshold_low, threshold_high = 10, 230
     threshold_s = 190  # 饱和度的最高允许值
     rgb_size_threshold = 4  # rgb的尺寸限制
+    ai_path = 'weights/best.pt'
+    ai_conf_threshold = 0.5
 
     # mask parameter
     target_size = (1024, 1024)  # (Width, Height) of mask
