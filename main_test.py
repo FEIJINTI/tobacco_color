@@ -13,6 +13,7 @@ import typing
 from shutil import copyfile
 
 import cv2
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.gridspec import GridSpec
@@ -23,6 +24,8 @@ import utils
 from config import Config
 from models import Detector, AnonymousColorDetector, ManualTree, SpecDetector, RgbDetector
 from utils import read_labeled_img, size_threshold, natural_sort
+
+matplotlib.use('TkAgg')
 
 
 class TestMain:
