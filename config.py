@@ -34,7 +34,7 @@ class Config:
     ai_conf_threshold = 0.5
 
     # mask parameter
-    target_size = (1024, 1024)  # (Width, Height) of mask
+    target_size = (256, 256)  # (Width, Height) of mask
     valve_merge_size = 2  # 每两个喷阀当中有任意一个出现杂质则认为都是杂质
     valve_horizontal_padding = 3  # 喷阀横向膨胀的尺寸，应该是奇数,3时表示左右各膨胀1
     max_open_valve_limit = 25  # 最大同时开启喷阀限制,按照电流计算，当前的喷阀可以开启的喷阀 600W的电源 / 12V电源 = 50A, 一个阀门1A
