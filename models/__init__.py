@@ -21,7 +21,7 @@ from detector import SugarDetect
 from utils import lab_scatter, read_labeled_img, size_threshold
 
 
-deploy = True
+deploy = False
 if not deploy:
     print("Training env")
     from tqdm import tqdm
