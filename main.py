@@ -122,7 +122,7 @@ def main(only_spec=False, only_color=False, if_merge=False, interval_time=None, 
         if single_spec:
             output_fifos = [mask_fifo_path, ]
         elif single_color:
-            output_fifos = [rgb_fifo_path, ]
+            output_fifos = [rgb_mask_fifo_path, ]
         else:
             output_fifos = [mask_fifo_path, rgb_mask_fifo_path]
         for fifo, mask in zip(output_fifos, masks):
