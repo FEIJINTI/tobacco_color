@@ -26,7 +26,7 @@ class Config:
 
     # rgb模型参数
     rgb_tobacco_model_path = r"weights/tobacco_dt_2022-08-05_10-38.model"
-    rgb_background_model_path = r"weights/background_dt_2022-08-09_16-08.model"
+    rgb_background_model_path = r"weights/background_dt_2022-08-22_22-15.model"
     threshold_low, threshold_high = 10, 230
     threshold_s = 190  # 饱和度的最高允许值
     rgb_size_threshold = 4  # rgb的尺寸限制
@@ -38,7 +38,7 @@ class Config:
     valve_merge_size = 2  # 每两个喷阀当中有任意一个出现杂质则认为都是杂质
     valve_horizontal_padding = 3  # 喷阀横向膨胀的尺寸，应该是奇数,3时表示左右各膨胀1
     max_open_valve_limit = 25  # 最大同时开启喷阀限制,按照电流计算，当前的喷阀可以开启的喷阀 600W的电源 / 12V电源 = 50A, 一个阀门1A
-
+    max_time_spent = 200
     # save part
     offset_vertical = 0
 

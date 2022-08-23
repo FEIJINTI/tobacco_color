@@ -22,51 +22,58 @@ def main(only_spec=False, only_color=False, if_merge=False, interval_time=None, 
     total_len = Config.nRows * Config.nCols * Config.nBands * 4  # float型变量, 4个字节
     total_rgb = Config.nRgbRows * Config.nRgbCols * Config.nRgbBands * 1  # int型变量
     if not single_color:
+        logging.info("create color fifo")
         if not os.access(img_fifo_path, os.F_OK):
             os.mkfifo(img_fifo_path, 0o777)
         if not os.access(mask_fifo_path, os.F_OK):
             os.mkfifo(mask_fifo_path, 0o777)
     if not single_spec:
+        logging.info("create rgb fifo")
         if not os.access(rgb_fifo_path, os.F_OK):
             os.mkfifo(rgb_fifo_path, 0o777)
         if not os.access(rgb_mask_fifo_path, os.F_OK):
             os.mkfifo(rgb_mask_fifo_path, 0o777)
     logging.info(f"请注意!正在以调试模式运行程序，输出的信息可能较多。")
+    # specially designed for Miaow.
     if (interval_time is not None) and (delay_repeat_time is not None):
         interval_time = float(interval_time) / 1000.0
         delay_repeat_time = int(delay_repeat_time)
         logging.warning(f'Delay {interval_time*1000:.2f}ms will be added per {delay_repeat_time} frames')
         delay_repeat_time_count = 0
     while True:
-        if not single_color:
+        img_data, rgb_data = None, None
+        if single_spec:
             fd_img = os.open(img_fifo_path, os.O_RDONLY)
             # spec data read
-            data = os.read(fd_img, total_len)
-            if len(data) < 3:
+            data_total = os.read(fd_img, total_len)
+            if len(data_total) < 3:
                 try:
-                    threshold = int(float(data))
+                    threshold = int(float(data_total))
                     Config.spec_size_threshold = threshold
                     logging.info(f'[INFO] Get spec threshold: {threshold}')
                 except Exception as e:
                     logging.error(
-                        f'毁灭性错误:收到长度小于3却无法转化为整数spec_size_threshold的网络报文，报文内容为 {data},'
+                        f'毁灭性错误:收到长度小于3却无法转化为整数spec_size_threshold的网络报文，报文内容为 {data_total},'
                         f' 错误为 {e}.')
+                if single_spec:
+                    continue
             else:
-                data_total = data
+                data_total = data_total
             os.close(fd_img)
             try:
                 img_data = np.frombuffer(data_total, dtype=np.float32).reshape((Config.nRows, Config.nBands, -1)) \
                     .transpose(0, 2, 1)
+                print(f"get image_shape {img_data.shape}")
             except Exception as e:
                 logging.error(f'毁灭性错误!收到的光谱数据长度为{len(data_total)}无法转化成指定的形状 {e}')
 
-        if not single_spec:
+        if single_color:
             fd_rgb = os.open(rgb_fifo_path, os.O_RDONLY)
             # rgb data read
-            rgb_data = os.read(fd_rgb, total_rgb)
-            if len(rgb_data) < 3:
+            rgb_data_total = os.read(fd_rgb, total_rgb)
+            if len(rgb_data_total) < 3:
                 try:
-                    rgb_threshold = int(float(rgb_data))
+                    rgb_threshold = int(float(rgb_data_total))
                     Config.rgb_size_threshold = rgb_threshold
                     logging.info(f'Get rgb threshold: {rgb_threshold}')
                 except Exception as e:
@@ -74,23 +81,29 @@ def main(only_spec=False, only_color=False, if_merge=False, interval_time=None, 
                                   f' 错误为 {e}.')
                 continue
             else:
-                rgb_data_total = rgb_data
+                rgb_data_total = rgb_data_total
             os.close(fd_rgb)
             try:
                 rgb_data = np.frombuffer(rgb_data_total, dtype=np.uint8).reshape((Config.nRgbRows, Config.nRgbCols, -1))
+                print(f"get rgb_data shape {rgb_data.shape}")
             except Exception as e:
-                logging.error(f'毁灭性错误!收到的rgb数据长度为{len(rgb_data)}无法转化成指定形状 {e}')
+                logging.error(f'毁灭性错误!收到的rgb数据长度为{len(rgb_data_total)}无法转化成指定形状 {e}')
 
         # 识别 read
         since = time.time()
         # predict
         if single_spec or single_color:
+            print('start predict')
             if single_spec:
+                print('spec predict', img_data.shape)
                 mask_spec = spec_detector.predict(img_data).astype(np.uint8)
                 masks = [mask_spec, ]
+                print('spectral mask shape:', masks[0].shape)
             else:
+                print('rgb predict', rgb_data.shape)
                 mask_rgb = rgb_detector.predict(rgb_data).astype(np.uint8)
                 masks = [mask_rgb, ]
+                print("rgb mask shape: ", masks[0].shape)
         else:
             if only_spec:
                 # 光谱识别
@@ -127,8 +140,10 @@ def main(only_spec=False, only_color=False, if_merge=False, interval_time=None, 
         else:
             output_fifos = [mask_fifo_path, rgb_mask_fifo_path]
         for fifo, mask in zip(output_fifos, masks):
+            print("open fifo")
             fd_mask = os.open(fifo, os.O_WRONLY)
             os.write(fd_mask, mask.tobytes())
+            print("close fifo")
             os.close(fd_mask)
         time_spent = (time.time() - since) * 1000
         predict_by = 'spec' if single_spec else 'rgb' if single_color else 'spec+rgb'
@@ -162,4 +177,5 @@ if __name__ == '__main__':
     console_handler.setLevel(logging.DEBUG if args.d else logging.WARNING)
     logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s',
                         handlers=[file_handler, console_handler], level=logging.DEBUG)
-    main(only_spec=args.os, only_color=args.oc, if_merge=args.m, interval_time=args.dt, delay_repeat_time=args.df)
+    main(only_spec=args.os, only_color=args.oc, if_merge=args.m, interval_time=args.dt, delay_repeat_time=args.df,
+         single_spec=args.ss, single_color=args.sc)
