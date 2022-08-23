@@ -141,7 +141,7 @@ class BeforeAfterMethods:
 
 
 class FileReceiver(Transmitter):
-    def __init__(self, input_dir: str, output_queue: ImgQueue, speed: float = 3.0, name_pattern: str = None,
+    def __init__(self, input_dir: str, output_queue, speed: float = 3.0, name_pattern: str = None,
                  job_name: str = 'file_receiver', run_process: bool = False):
         super(FileReceiver, self).__init__(job_name=job_name, run_process=run_process)
         self.input_dir = input_dir
@@ -164,8 +164,6 @@ class FileReceiver(Transmitter):
             file_names = [file_name for file_name in file_names if (self.name_pattern in file_name)]
         else:
             file_names = file_names
-
-        # with self._io_lock:
         self.file_names = file_names
         self.file_idx = 0
 
@@ -176,7 +174,7 @@ class FileReceiver(Transmitter):
     @Transmitter.job_decorator
     def job_func(self, need_time=False, *args, **kwargs):
         """
-        发送文件
+        发送文件.
 
         :param need_time: 是否需要发送时间戳
         :param kwargs: output_queue: 以进程模式运行时需要, virtual_data: 虚拟的数据，用于测试

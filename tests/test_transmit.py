@@ -35,7 +35,7 @@ class TransmitterTest(unittest.TestCase):
         logging.info('测试子进程文件接收器')
         image_queue = multiprocessing.Queue()
         file_receiver = FileReceiver(job_name='rgb img receive', input_dir='../data', output_queue=image_queue,
-                                     speed=0.5, name_pattern=None, run_process=True)
+                                     speed=1, name_pattern=None, run_process=True)
         virtual_data = np.random.randint(0, 255, (1024, 4096, 3), dtype=np.uint8)
         file_receiver.start(need_time=True, virtual_data=virtual_data)
         for i in range(5):
