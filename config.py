@@ -30,7 +30,7 @@ class Config:
     threshold_low, threshold_high = 10, 230
     threshold_s = 190  # 饱和度的最高允许值
     rgb_size_threshold = 4  # rgb的尺寸限制
-    ai_path = 'weights/best.pt'
+    ai_path = 'weights/best0823.pt'
     ai_conf_threshold = 0.5
 
     # mask parameter
