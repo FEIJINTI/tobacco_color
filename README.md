@@ -323,7 +323,7 @@ jmpy -i "tobacco_color" [-o output dir]
 
 要带有图形化界面的开机自启动不能把程序放到init.d底下，不然的话图形化界面还没起来就启动程序，会崩掉。
 
-## 以.Desktop文件形式
+## 以\<program_name\>.Desktop文件形式
 
  1. 首先写一个`~/run.sh`，内容如下：
 
@@ -332,7 +332,7 @@ jmpy -i "tobacco_color" [-o output dir]
     python /home/<user_name>/tobacco_color/main.py -os # 这里的os表示only spectral，还有oc，不加就是都用上。
     ```
 
- 2. 然后，写一个.desktop文件
+ 2. 然后，写一个\<program_name\>.desktop文件
 
     ```shel
     [Desktop Entry]
@@ -478,4 +478,6 @@ def __setstate__(self, state):
 ![image-20220823160026017](https://raw.githubusercontent.com/Karllzy/imagebed/main/img/image-20220823160026017.png)
 
 
+
+经过调查后，我们发现比较合理的方案是使用共享内存的方式进行数据的交互。共享内存是python3.8以上添加的新特性，所以必须保证python的版本大于3.8.
 
