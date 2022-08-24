@@ -17,6 +17,7 @@ from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 
 from config import Config
+from detector import SugarDetect
 from utils import lab_scatter, read_labeled_img, size_threshold
 
 
@@ -306,10 +307,13 @@ class BlkModel:
 
 
 class RgbDetector(Detector):
-    def __init__(self, tobacco_model_path, background_model_path):
+    def __init__(self, tobacco_model_path, background_model_path, ai_path):
         self.background_detector = None
         self.tobacco_detector = None
         self.load(tobacco_model_path, background_model_path)
+        self.ai_path = ai_path
+        if ai_path is not None:
+            self.ai_detector = SugarDetect(model_path=ai_path)
 
     def predict(self, rgb_data):
         rgb_data = self.tobacco_detector.pretreatment(rgb_data)  # resize to the required size
@@ -320,6 +324,10 @@ class RgbDetector(Detector):
         non_tobacco_or_background = 1 - (background | tobacco_d)  # 既非烟梗也非背景的区域
         rgb_predict_result = high_s | non_tobacco_or_background  # 高饱和度区域或者是双非区域都是杂质
         mask_rgb = size_threshold(rgb_predict_result, Config.blk_size, Config.rgb_size_threshold)  # 杂质大小限制，超过大小的才打
+        if self.ai_path is not None:
+            mask_ai = self.ai_detector.detect(rgb_data, Config.ai_conf_threshold)
+            mask_ai = cv2.resize(mask_ai, dsize=(mask_rgb.shape[1], mask_rgb.shape[0]))
+            mask_rgb = mask_ai | mask_rgb
         return mask_rgb
 
     def load(self, tobacco_model_path, background_model_path):
