@@ -63,7 +63,6 @@ def main(only_spec=False, only_color=False, if_merge=False, interval_time=None, 
             try:
                 img_data = np.frombuffer(data_total, dtype=np.float32).reshape((Config.nRows, Config.nBands, -1)) \
                     .transpose(0, 2, 1)
-                print(f"get image_shape {img_data.shape}")
             except Exception as e:
                 logging.error(f'毁灭性错误!收到的光谱数据长度为{len(data_total)}无法转化成指定的形状 {e}')
 
@@ -85,7 +84,6 @@ def main(only_spec=False, only_color=False, if_merge=False, interval_time=None, 
             os.close(fd_rgb)
             try:
                 rgb_data = np.frombuffer(rgb_data_total, dtype=np.uint8).reshape((Config.nRgbRows, Config.nRgbCols, -1))
-                print(f"get rgb_data shape {rgb_data.shape}")
             except Exception as e:
                 logging.error(f'毁灭性错误!收到的rgb数据长度为{len(rgb_data_total)}无法转化成指定形状 {e}')
 
@@ -93,17 +91,12 @@ def main(only_spec=False, only_color=False, if_merge=False, interval_time=None, 
         since = time.time()
         # predict
         if single_spec or single_color:
-            print('start predict')
             if single_spec:
-                print('spec predict', img_data.shape)
                 mask_spec = spec_detector.predict(img_data).astype(np.uint8)
                 masks = [mask_spec, ]
-                print('spectral mask shape:', masks[0].shape)
             else:
-                print('rgb predict', rgb_data.shape)
                 mask_rgb = rgb_detector.predict(rgb_data).astype(np.uint8)
                 masks = [mask_rgb, ]
-                print("rgb mask shape: ", masks[0].shape)
         else:
             if only_spec:
                 # 光谱识别
@@ -140,10 +133,8 @@ def main(only_spec=False, only_color=False, if_merge=False, interval_time=None, 
         else:
             output_fifos = [mask_fifo_path, rgb_mask_fifo_path]
         for fifo, mask in zip(output_fifos, masks):
-            print("open fifo")
             fd_mask = os.open(fifo, os.O_WRONLY)
             os.write(fd_mask, mask.tobytes())
-            print("close fifo")
             os.close(fd_mask)
         time_spent = (time.time() - since) * 1000
         predict_by = 'spec' if single_spec else 'rgb' if single_color else 'spec+rgb'
