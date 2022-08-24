@@ -9,8 +9,6 @@ from config import Config
 from models import SpecDetector, RgbDetector
 import typing
 import logging
-logging.basicConfig(format='%(asctime)s %(levelname)s %(name)s %(message)s',
-                    level=logging.WARNING)
 
 
 class Transmitter(object):
