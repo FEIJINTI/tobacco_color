@@ -1,5 +1,6 @@
 import multiprocessing
 import os
+import queue
 import threading
 import typing
 from multiprocessing import Process, Queue
@@ -18,13 +19,8 @@ from models import SpecDetector, RgbDetector
 from typing import Any, Union
 import logging
 
-def test_func(*args, **kwargs):
-    print('test_func')
-    print(kwargs)
-    return 'test_func'
 
 class Transmitter(object):
-
     def __init__(self, job_name: str, run_process: bool = False):
         self.output = None
         self.job_name = job_name
@@ -74,8 +70,12 @@ class Transmitter(object):
         :return:
         """
         if self._running_handler is not None:
+            logging.info(f"stopping {self.job_name}")
             self._stop_event.set()
             self._running_handler = None
+            logging.info(f"{self.job_name} stopped")
+        else:
+            logging.info("Stopping a not running object")
 
     def __del__(self):
         self.stop()
@@ -228,12 +228,17 @@ class FifoReceiver(Transmitter):
         :param post_process_func:
         :return:
         """
+        logging.info(f'Opening fifo {self._input_fifo_path}')
         input_fifo = os.open(self._input_fifo_path, os.O_RDONLY)
         data = os.read(input_fifo, self._max_len)
+        while len(data) < self._max_len:
+            data += os.read(input_fifo, self._max_len)
+        logging.info(f'Read from fifo {self._input_fifo_path} done')
+        os.close(input_fifo)
         if post_process_func is not None:
             data = post_process_func(data)
+        logging.info('putting data into fifo')
         self._output_queue.put(data)
-        os.close(input_fifo)
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -252,16 +257,15 @@ class FifoSender(Transmitter):
 
     def set_source(self, source: ImgQueue):
         self.stop()
-        with self._io_lock:
-            self._input_source = source
+        self._input_source = source
 
     def set_output(self, output_fifo_path: str):
         self.stop()
-        with self._io_lock:
-            if not os.access(output_fifo_path, os.F_OK):
-                os.mkfifo(output_fifo_path, 0o777)
-            self._output_fifo_path = output_fifo_path
+        if not os.access(output_fifo_path, os.F_OK):
+            os.mkfifo(output_fifo_path, 0o777)
+        self._output_fifo_path = output_fifo_path
 
+    @Transmitter.job_decorator
     def job_func(self, pre_process=None, *args, **kwargs):
         """
         发送线程
@@ -269,16 +273,19 @@ class FifoSender(Transmitter):
         :param pre_process:
         :return:
         """
-        if self._input_source.empty():
-            return
-        data = self._input_source.get()
-        if pre_process is not None:
-            data = pre_process(data)
-        logging.debug(f'put data to fifo {self._output_fifo_path}')
-        output_fifo = os.open(self._output_fifo_path, os.O_WRONLY)
-        os.write(output_fifo, data)
-        os.close(output_fifo)
-        logging.debug(f'put data to fifo {self._output_fifo_path} done')
+        data = None
+        try:
+            data = self._input_source.get(timeout=0.1)
+        except queue.Empty:
+            pass
+        if data is not None:
+            if pre_process is not None:
+                data = pre_process(data)
+            logging.info(f'put data to fifo {self._output_fifo_path}')
+            output_fifo = os.open(self._output_fifo_path, os.O_WRONLY)
+            os.write(output_fifo, data)
+            os.close(output_fifo)
+            logging.info(f'put data to fifo {self._output_fifo_path} done')
 
 
 class CmdImgSplitMidware(Transmitter):
