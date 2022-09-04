@@ -44,3 +44,6 @@ class Config:
 
     # logging
     root_dir = os.path.split(os.path.realpath(__file__))[0]
+    log_freq = 1500  # 进行log的频率（多少次predict后进行log写出记录喷阀开启次数）
+    rgb_log_dir = 'rgb_log'  # rgb log 文件夹
+    spec_log_dir = 'spec_log'  # spec log 文件夹

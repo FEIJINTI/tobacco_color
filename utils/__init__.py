@@ -6,6 +6,9 @@
 import glob
 import logging
 import os
+import pathlib
+import time
+from datetime import datetime
 from queue import Queue
 
 import cv2
@@ -272,6 +275,15 @@ byte order = 0
 wavelength units = Unknown
 """
     return template_file
+
+
+def valve_log(log_path: pathlib.Path, valve_num: [int, str]):
+    """
+    将喷阀的开启次数记录到文件log_path当中。
+    """
+    valve_str = "截至 " + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + f' 喷阀使用次数: {valve_num}.'
+    with open(log_path) as f:
+        f.write(str(valve_str))
 
 
 if __name__ == '__main__':
