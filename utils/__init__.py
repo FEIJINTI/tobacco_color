@@ -282,7 +282,7 @@ def valve_log(log_path: pathlib.Path, valve_num: [int, str]):
     将喷阀的开启次数记录到文件log_path当中。
     """
     valve_str = "截至 " + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + f' 喷阀使用次数: {valve_num}.'
-    with open(log_path) as f:
+    with open(log_path, "w") as f:
         f.write(str(valve_str))
 
 
