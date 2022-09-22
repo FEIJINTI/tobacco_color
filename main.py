@@ -26,10 +26,10 @@ def main(only_spec=False, only_color=False, if_merge=False, interval_time=None, 
     total_rgb = Config.nRgbRows * Config.nRgbCols * Config.nRgbBands * 1  # int型变量
     log_file_name = datetime.now().strftime('%Y_%m_%d__%H_%M_%S.log')
     if single_spec:
-        os.mkdirs(Path(Config.root_dir) / Path(Config.rgb_log_dir), exist_ok=True)
+        os.makedirs(Path(Config.root_dir) / Path(Config.rgb_log_dir), exist_ok=True)
         log_path = Path(Config.root_dir) / Path(Config.rgb_log_dir) / log_file_name
     if single_color:
-        os.mkdirs(Path(Config.root_dir) / Path(Config.spec_log_dir), exist_ok=True)
+        os.makedirs(Path(Config.root_dir) / Path(Config.spec_log_dir), exist_ok=True)
         log_path = Path(Config.root_dir) / Path(Config.spec_log_dir) / log_file_name
     if not single_color:
         logging.info("create color fifo")
