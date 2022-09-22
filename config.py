@@ -20,17 +20,24 @@ class Config:
 
     # 光谱模型参数
     blk_size = 4  # 必须是2的倍数，不然会出错
-    pixel_model_path = r"./weights/pixel_2022-08-02_15-22.model"
-    blk_model_path = r"./weights/rf_4x4_c22_20_sen8_9.model"
+    raise NotImplementedError("开发时和机器上部署的路径不同，请注意选择pixel_model_path、blk_model_path后删除本行")
+    # pixel_model_path = r"./weights/pixel_2022-08-02_15-22.model"  # 开发时的路径
+    # pixel_model_path = r"/home/dt/tobacco-color/weights/pixel_2022-08-02_15-22.model"  # 机器上部署的路径
+    # blk_model_path = r"./weights/rf_4x4_c22_20_sen8_9.model"   # 开发时的路径
+    # blk_model_path = r"/home/dt/tobacco-color/weights/rf_4x4_c22_20_sen8_9.model"  # 机器上部署的路径
     spec_size_threshold = 3
 
     # rgb模型参数
-    rgb_tobacco_model_path = r"weights/tobacco_dt_2022-08-27_14-43.model"
-    rgb_background_model_path = r"weights/background_dt_2022-08-22_22-15.model"
+    raise NotImplementedError("开发时和机器上部署的路径不同，请注意选择rgb_tobacco_model_path、rgb_background_model_path、ai_path后删除本行")
+    # rgb_tobacco_model_path = r"weights/tobacco_dt_2022-08-27_14-43.model"  # 开发时的路径
+    # rgb_tobacco_model_path = r"/home/dt/tobacco-color/weights/tobacco_dt_2022-08-27_14-43.model"  # 机器上部署的路径
+    # rgb_background_model_path = r"weights/background_dt_2022-08-22_22-15.model"  # 开发时的路径
+    # rgb_background_model_path = r"/home/dt/tobacco-color/weights/background_dt_2022-08-22_22-15.model"  # 机器上部署的路径
     threshold_low, threshold_high = 10, 230
     threshold_s = 190  # 饱和度的最高允许值
     rgb_size_threshold = 4  # rgb的尺寸限制
-    ai_path = 'weights/best0827.pt'
+    # ai_path = 'weights/best0827.pt'  # 开发时的路径
+    # ai_path = '/home/dt/tobacco-color/weights/best0827.pt'  # 机器上部署的路径
     ai_conf_threshold = 0.6
 
     # mask parameter
