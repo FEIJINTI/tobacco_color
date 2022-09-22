@@ -3,7 +3,7 @@
 2022年7月18日开始开发的项目，使用彩色相机进行烟梗颜色的识别。
 
 ## 如何进行模型训练和部署？
-1. 项目当中需要包含`data`和`models`这两个文件夹，请下载到当前文件夹下,这是链接：[data](https://macrosolid-my.sharepoint.com/personal/feijinti_miaow_fun/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Ffeijinti%5Fmiaow%5Ffun%2FDocuments%2FPycharmProjects%2Ftobacco%5Fcolor%2Fdata&ga=1), [models](https://macrosolid-my.sharepoint.com/:f:/g/personal/feijinti_miaow_fun/EiyBjWEX90JGn8S-e5Kh7N8B1GWvfvDcNbpleWDTwkDm1w?e=wyL4EF)
+1. 项目需要包含`data`和`weights`这两个文件夹，请从[release](https://github.com/NanjingForestryUniversity/supermachine-tobacco/releases)中下载到当前文件夹下，对于训练过的所有可用模型和部署的已加密程序，已归档到[这里](https://macrosolid-my.sharepoint.com/:f:/g/personal/lab_miaow_fun/Es4_iGy0mtBKktn_a0-5W40BRxzb6SeGxKY_wAVJMlGBrQ?e=px1Tfn)
 2. 使用[01_dataset.ipynb](./01_dataset.ipynb) 进行数据集的分析文件格式需要设置为这种形式：
     ```text
     dataset
