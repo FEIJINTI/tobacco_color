@@ -124,7 +124,7 @@ def main(only_spec=False, only_color=False, if_merge=False, interval_time=None, 
                 mask_rgb = rgb_detector.predict(rgb_data).astype(np.uint8)
             masks = [mask_spec, mask_rgb]
         # 进行多个喷阀的合并
-        masks = [utils_customized.shield_valve(mask, left_shield=8) for mask in masks]
+        masks = [utils_customized.shield_valve(mask, left_shield=10) for mask in masks]
         masks = [utils_customized.valve_expend(mask) for mask in masks]
         mask_nums = sum([np.sum(np.sum(mask)) for mask in masks])
         log_time_count += 1
