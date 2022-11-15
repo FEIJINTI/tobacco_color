@@ -178,6 +178,14 @@ def valve_expend(img: np.ndarray) -> np.ndarray:
     return img
 
 
+def shield_valve(mask: np.ndarray, left_shield: int = -1, right_shield: int = -1) -> np.asarray:
+    if (left_shield < mask.shape[1]) & (left_shield > 0):
+        mask[:, :left_shield] = 0
+    if (right_shield < mask.shape[1]) & (right_shield > 0):
+        mask[:, -right_shield:] = 0
+    return mask
+
+
 def valve_limit(mask: np.ndarray, max_valve_num: int) -> np.ndarray:
     """
     用于限制阀门同时开启个数的函数
@@ -282,8 +290,8 @@ def valve_log(log_path: pathlib.Path, valve_num: [int, str]):
     将喷阀的开启次数记录到文件log_path当中。
     """
     valve_str = "截至 " + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + f' 喷阀使用次数: {valve_num}.'
-    with open(log_path, "w") as f:
-        f.write(str(valve_str))
+    with open(log_path, "a") as f:
+        f.write(str(valve_str) + "\n")
 
 
 if __name__ == '__main__':
