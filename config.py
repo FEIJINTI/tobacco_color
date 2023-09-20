@@ -33,7 +33,10 @@ class Config:
     # rgb_background_model_path = r"/home/dt/tobacco-color/weights/background_dt_2022-08-22_22-15.model"  # 机器上部署的路径
     threshold_low, threshold_high = 10, 230
     threshold_s = 190  # 饱和度的最高允许值
-    rgb_size_threshold = 4  # rgb的尺寸限制
+    threshold_a = 127  # a的最高允许值
+    threshold_b = 127  # b的最高允许值
+    rgb_size_threshold = 6  # rgb的尺寸限制
+    lab_size_threshold = 6  # lab的尺寸限制
     ai_path = 'weights/best0827.pt'  # 开发时的路径
     # ai_path = '/home/dt/tobacco-color/weights/best0827.pt'  # 机器上部署的路径
     ai_conf_threshold = 0.6
@@ -41,7 +44,7 @@ class Config:
     # mask parameter
     target_size = (1024, 1024)  # (Width, Height) of mask
     valve_merge_size = 2  # 每两个喷阀当中有任意一个出现杂质则认为都是杂质
-    valve_horizontal_padding = 3  # 喷阀横向膨胀的尺寸，应该是奇数,3时表示左右各膨胀1
+    valve_horizontal_padding = 5  # 喷阀横向膨胀的尺寸，应该是奇数,3时表示左右各膨胀1,5时表示左右各膨胀2(23.9.20老倪要求改为5)
     max_open_valve_limit = 25  # 最大同时开启喷阀限制,按照电流计算，当前的喷阀可以开启的喷阀 600W的电源 / 12V电源 = 50A, 一个阀门1A
     max_time_spent = 200
     # save part

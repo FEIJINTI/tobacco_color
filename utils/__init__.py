@@ -114,12 +114,28 @@ def lab_scatter(dataset: dict, class_max_num=None, is_3d=False, is_ps_color_spac
     :return: None
     """
     # 观察色彩分布情况
+    if "alpha" not in kwargs.keys():
+        kwargs["alpha"] = 0.1
+    if 'inside_alpha' in kwargs.keys():
+        inside_alpha = kwargs['inside_alpha']
+    else:
+        inside_alpha = kwargs["alpha"]
+    if 'outside_alpha' in kwargs.keys():
+        outside_alpha = kwargs['outside_alpha']
+    else:
+        outside_alpha = kwargs["alpha"]
     fig = plt.figure()
     if is_3d:
         ax = fig.add_subplot(projection='3d')
     else:
         ax = fig.add_subplot()
     for label, data in dataset.items():
+        if label == 'Inside':
+            alpha = inside_alpha
+        elif label == 'Outside':
+            alpha = outside_alpha
+        else:
+            alpha = kwargs["alpha"]
         if class_max_num is not None:
             assert isinstance(class_max_num, int)
             if data.shape[0] > class_max_num:
@@ -128,9 +144,9 @@ def lab_scatter(dataset: dict, class_max_num=None, is_3d=False, is_ps_color_spac
                 data = data[sample_idx, :]
         l, a, b = [data[:, i] for i in range(3)]
         if is_3d:
-            ax.scatter(a, b, l, label=label, alpha=0.1)
+            ax.scatter(a, b, l, label=label, alpha=alpha)
         else:
-            ax.scatter(a, b, label=label, alpha=0.1)
+            ax.scatter(a, b, label=label, alpha=alpha)
     x_max, x_min, y_max, y_min, z_max, z_min = [127, -127, 127, -127, 100, 0] if is_ps_color_space else \
         [255, 0, 255, 0, 255, 0]
     ax.set_xlim(x_min, x_max)

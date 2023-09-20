@@ -15,6 +15,7 @@ from scipy.ndimage import binary_dilation
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
+import time
 
 from config import Config
 from detector import SugarDetect
@@ -328,6 +329,18 @@ class RgbDetector(Detector):
             mask_ai = self.ai_detector.detect(rgb_data, Config.ai_conf_threshold)
             mask_ai = cv2.resize(mask_ai, dsize=(mask_rgb.shape[1], mask_rgb.shape[0]))
             mask_rgb = mask_ai | mask_rgb
+        # # 测试时间
+        # start = time.time()
+        # 转换为lab，提取a通道，识别绿色杂质
+        lab_a = cv2.cvtColor(rgb_data, cv2.COLOR_RGB2LAB)[..., 1] < Config.threshold_a
+        # 转换为lab，提取b通道，识别蓝色杂质
+        lab_b = cv2.cvtColor(rgb_data, cv2.COLOR_RGB2LAB)[..., 2] < Config.threshold_b
+        lab_predict_result = lab_a | lab_b
+        mask_lab = size_threshold(lab_predict_result, Config.blk_size, Config.lab_size_threshold)
+        mask_rgb = mask_rgb | mask_lab
+        # # 测试时间
+        # end = time.time()
+        # print("lab time: ", end - start)
         return mask_rgb
 
     def load(self, tobacco_model_path, background_model_path):
@@ -456,15 +469,17 @@ class DecisionTree(DecisionTreeClassifier):
 
 
 if __name__ == '__main__':
-    data_dir = "data/dataset"
+    import os
+    data_dir = os.path.join('E:\Tobacco\data', 'dataset')
     color_dict = {(0, 0, 255): "yangeng"}
     dataset = read_labeled_img(data_dir, color_dict=color_dict, is_ps_color_space=False)
     ground_truth = dataset['yangeng']
-    detector = AnonymousColorDetector(file_path='models/dt_2022-07-19_14-38.model')
+    detector = AnonymousColorDetector(file_path=r'E:\Tobacco\weights\tobacco_dt_2022-08-05_10-38.model')
     # x = np.array([[10, 30, 20], [10, 35, 25], [10, 35, 36]])
     boundary = np.array([0, 0, 0, 255, 255, 255])
     # detector.fit(x, world_boundary, threshold=5, negative_sample_size=2000)
-    detector.visualize(boundary, sample_size=50000, class_max_num=5000, ground_truth=ground_truth)
+    detector.visualize(boundary, sample_size=500000, class_max_num=5000, ground_truth=ground_truth, inside_alpha=0.3,
+                       outside_alpha=0.01)
     temp = scipy.io.loadmat('data/dataset_2022-07-19_11-35.mat')
     x, y = temp['x'], temp['y']
     dataset = {'inside': x[y.ravel() == 1, :], "outside": x[y.ravel() == 0, :]}
