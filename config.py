@@ -26,6 +26,9 @@ class Config:
     # blk_model_path = r"/home/dt/tobacco-color/weights/rf_4x4_c22_20_sen8_9.model"  # 机器上部署的路径
     spec_size_threshold = 3
 
+    s_threshold_a = 125  # s_a的最高允许值
+    s_threshold_b = 125  # s_b的最高允许值
+
     # rgb模型参数
     rgb_tobacco_model_path = r"weights/tobacco_dt_2022-08-27_14-43.model"  # 开发时的路径
     # rgb_tobacco_model_path = r"/home/dt/tobacco-color/weights/tobacco_dt_2022-08-27_14-43.model"  # 机器上部署的路径
